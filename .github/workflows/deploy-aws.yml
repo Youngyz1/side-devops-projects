@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: 18
           cache: npm
-          cache-dependency-path: aws/project-2-cicd-pipeline/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -63,24 +63,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug AWS Secrets
-        run: |
-          # Assign GitHub secrets to shell variables
-          AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
-          AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          AWS_REGION="${{ secrets.AWS_REGION }}"
-          ECR_REPOSITORY="${{ secrets.ECR_REPOSITORY }}"
-          ECS_CLUSTER="${{ secrets.ECS_CLUSTER }}"
-          ECS_SERVICE="${{ secrets.ECS_SERVICE }}"
-
-          # Print lengths or values safely
-          echo "✅ AWS_ACCESS_KEY_ID length: ${#AWS_ACCESS_KEY_ID}"
-          echo "✅ AWS_SECRET_ACCESS_KEY length: ${#AWS_SECRET_ACCESS_KEY}"
-          echo "🌍 AWS_REGION: $AWS_REGION"
-          echo "📦 ECR_REPOSITORY: $ECR_REPOSITORY"
-          echo "🗂 ECS_CLUSTER: $ECS_CLUSTER"
-          echo "⚙️ ECS_SERVICE: $ECS_SERVICE"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -104,21 +86,33 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Render ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: youngyzapp
-          image: ${{ steps.build-image.outputs.image }}
+      - name: Update ECS task definition with new image
+        run: |
+          aws ecs register-task-definition \
+            --family ${{ env.ECS_TASK_DEFINITION }} \
+            --network-mode awsvpc \
+            --requires-compatibilities FARGATE \
+            --cpu 256 \
+            --memory 512 \
+            --execution-role-arn $(aws iam get-role --role-name ecsTaskExecutionRole-${{ env.ECS_CLUSTER }} --query 'Role.Arn' --output text) \
+            --container-definitions "[
+              {
+                \"name\": \"youngyzapp\",
+                \"image\": \"${{ steps.build-image.outputs.image }}\",
+                \"essential\": true,
+                \"portMappings\": [
+                  {\"containerPort\": 3001,\"protocol\": \"tcp\"}
+                ]
+              }
+            ]"
 
       - name: Deploy to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --force-new-deployment
 
       - name: Output Public App URL
         run: |
@@ -126,18 +120,13 @@ jobs:
           sleep 10
 
           TASK_ARN=$(aws ecs list-tasks \
-            --cluster $ECS_CLUSTER \
-            --service-name $ECS_SERVICE \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.ECS_SERVICE }} \
             --query 'taskArns[0]' \
             --output text)
 
-          if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
-            echo "❌ No ECS task found."
-            exit 1
-          fi
-
           NETWORK_INTERFACE_ID=$(aws ecs describe-tasks \
-            --cluster $ECS_CLUSTER \
+            --cluster ${{ env.ECS_CLUSTER }} \
             --tasks $TASK_ARN \
             --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
             --output text)
@@ -150,5 +139,3 @@ jobs:
           echo ""
           echo "🚀 Deployment successful!"
           echo "📱 App URL:  http://$PUBLIC_IP:3001"
-          echo "🏥 Health:   http://$PUBLIC_IP:3001/health"
-          echo "📊 API Info: http://$PUBLIC_IP:3001/api/info"
