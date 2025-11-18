@@ -1,0 +1,13 @@
+# Ignore Terraform local cache and provider binaries
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+
+# Ignore Node modules
+**/node_modules/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
