@@ -1,6 +1,6 @@
-name: Deploy to AWS ECS
+name: Deploy Project 2 to AWS ECS
 
-# Trigger workflow on push to main for project-2 changes, pull requests, or manual trigger
+# Run only when project-2 files change OR when manually triggered
 on:
   push:
     branches: [main]
@@ -12,7 +12,6 @@ on:
       - 'aws/project-2-cicd-pipeline/**'
   workflow_dispatch:
 
-# Environment variables from GitHub Secrets
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
@@ -21,12 +20,13 @@ env:
   ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
 
 jobs:
+
   test:
     name: Test Application
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./aws/project-2-cicd-pipeline
+        working-directory: aws/project-2-cicd-pipeline
 
     steps:
     - name: Checkout code
@@ -35,9 +35,9 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: './package-lock.json'
+        node-version: 18
+        cache: npm
+        cache-dependency-path: aws/project-2-cicd-pipeline/package-lock.json
 
     - name: Install dependencies
       run: npm ci
@@ -47,8 +47,8 @@ jobs:
 
     - name: Test Docker build
       run: |
-        docker build -t test-build .
-        echo "✅ Docker build successful!"
+        docker build -t project2-test .
+        echo "Docker build successful!"
 
   deploy:
     name: Deploy to AWS ECS
@@ -57,7 +57,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     defaults:
       run:
-        working-directory: ./aws/project-2-cicd-pipeline
+        working-directory: aws/project-2-cicd-pipeline
 
     steps:
     - name: Checkout code
@@ -86,11 +86,11 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Render ECS Task Definition
+    - name: Render ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ./task-definition.json
+        task-definition: task-definition.json
         container-name: youngyzapp
         image: ${{ steps.build-image.outputs.image }}
 
@@ -102,10 +102,10 @@ jobs:
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
 
-    - name: Get application URL
+    - name: Output Public App URL
       run: |
-        echo "⏳ Waiting for ECS service to stabilize..."
-        sleep 20
+        echo "Fetching ECS task IP..."
+        sleep 10
 
         TASK_ARN=$(aws ecs list-tasks \
           --cluster $ECS_CLUSTER \
@@ -113,23 +113,24 @@ jobs:
           --query 'taskArns[0]' \
           --output text)
 
-        if [ "$TASK_ARN" != "None" ] && [ "$TASK_ARN" != "" ]; then
-          NETWORK_INTERFACE_ID=$(aws ecs describe-tasks \
-            --cluster $ECS_CLUSTER \
-            --tasks $TASK_ARN \
-            --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
-            --output text)
-
-          PUBLIC_IP=$(aws ec2 describe-network-interfaces \
-            --network-interface-ids $NETWORK_INTERFACE_ID \
-            --query 'NetworkInterfaces[0].Association.PublicIp' \
-            --output text)
-
-          echo ""
-          echo "🚀 Deployment successful!"
-          echo "📱 App URL: http://$PUBLIC_IP:3001"
-          echo "🏥 Health: http://$PUBLIC_IP:3001/health"
-          echo "📊 API: http://$PUBLIC_IP:3001/api/info"
-        else
-          echo "❌ Could not retrieve task information. Check ECS console."
+        if [ "$TASK_ARN" = "None" ] || [ -z "$TASK_ARN" ]; then
+          echo "❌ No ECS task found."
+          exit 1
         fi
+
+        NETWORK_INTERFACE_ID=$(aws ecs describe-tasks \
+          --cluster $ECS_CLUSTER \
+          --tasks $TASK_ARN \
+          --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+          --output text)
+
+        PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+          --network-interface-ids $NETWORK_INTERFACE_ID \
+          --query 'NetworkInterfaces[0].Association.PublicIp' \
+          --output text)
+
+        echo ""
+        echo "🚀 Deployment successful!"
+        echo "📱 App URL:  http://$PUBLIC_IP:3001"
+        echo "🏥 Health:   http://$PUBLIC_IP:3001/health"
+        echo "📊 API Info: http://$PUBLIC_IP:3001/api/info"
