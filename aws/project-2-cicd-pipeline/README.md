@@ -45,7 +45,7 @@ npm start
 ### ✅ Step 2: Test Docker Build
 
 ```bash
-docker build -t my-webapp .
+docker build -t my-youngyzapp .
 docker run -p 3001:3001 -e ENVIRONMENT=local my-webapp
 ```
 
@@ -79,10 +79,10 @@ Add these secrets:
 | AWS\_ACCESS\_KEY\_ID     | output              | GitHub Actions AWS access  |
 | AWS\_SECRET\_ACCESS\_KEY | output              | GitHub Actions AWS secret  |
 | AWS\_REGION              | us-east-1           | AWS region                 |
-| ECR\_REPOSITORY          | my-webapp           | Container registry name    |
-| ECS\_CLUSTER             | webapp-cicd-cluster | ECS cluster name           |
-| ECS\_SERVICE             | webapp-cicd-service | ECS service name           |
-| ECS\_TASK\_DEFINITION    | webapp-cicd-task    | ECS task definition family |
+| ECR\_REPOSITORY          | my-youngyzapp           | Container registry name    |
+| ECS\_CLUSTER             | youngyzapp-cicd-cluster | ECS cluster name           |
+| ECS\_SERVICE             | youngyzapp-cicd-service | ECS service name           |
+| ECS\_TASK\_DEFINITION    | youngyzapp-cicd-task    | ECS task definition family |
 
 ---
 
@@ -91,7 +91,7 @@ Add these secrets:
 ```bash
 git init
 git add .
-git commit -m "Initial commit: AWS DevOps webapp with CI/CD"
+git commit -m "Initial commit: AWS DevOps youngyzapp with CI/CD"
 git branch -M main
 git remote add origin https://github.com/YOURUSERNAME/YOURREPO.git
 git push -u origin main
@@ -241,7 +241,7 @@ const apiKey = process.env.API_KEY || 'dev-key';
 ### Multiple Environments
 
 ```bash
-CLUSTER_NAME="webapp-staging-cluster"
+CLUSTER_NAME="youngyzapp-staging-cluster"
 ./aws-setup.sh
 ```
 
@@ -255,11 +255,11 @@ CLUSTER_NAME="webapp-staging-cluster"
 ## 🧹 Clean Up Resources
 
 ```bash
-aws ecs update-service --cluster webapp-cicd-cluster --service webapp-cicd-service --desired-count 0
-aws ecs delete-service --cluster webapp-cicd-cluster --service webapp-cicd-service --force
-aws ecs delete-cluster --cluster webapp-cicd-cluster
-aws ecr delete-repository --repository-name my-webapp --force
-aws logs delete-log-group --log-group-name /ecs/webapp-cicd-task
+aws ecs update-service --cluster youngyzapp-cicd-cluster --service youngyzapp-cicd-service --desired-count 0
+aws ecs delete-service --cluster youngyzapp-cicd-cluster --service youngyzapp-cicd-service --force
+aws ecs delete-cluster --cluster youngyzapp-cicd-cluster
+aws ecr delete-repository --repository-name my-youngyzapp --force
+aws logs delete-log-group --log-group-name /ecs/youngyzapp-cicd-task
 ```
 
 (Optional: delete IAM user and keys if created)

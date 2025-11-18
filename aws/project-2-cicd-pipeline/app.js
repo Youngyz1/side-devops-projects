@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3001;
 // Simple home page
 app.get('/', (req, res) => {
   res.send(`
-    <h1>🚀 My AWS DevOps Web App</h1>
+    <h1>🚀 YoungyZ AWS DevOps Web App</h1>
     <p>This app was deployed automatically to AWS ECS!</p>
     <p>Environment: ${process.env.ENVIRONMENT || 'development'}</p>
     <p>Current time: ${new Date().toLocaleString()}</p>
@@ -25,7 +25,7 @@ app.get('/health', (req, res) => {
 // Simple API endpoint
 app.get('/api/info', (req, res) => {
   res.json({
-    app: 'my-aws-webapp',
+    app: 'my-aws-youngyzapp',
     version: '1.0.0',
     environment: process.env.ENVIRONMENT || 'development',
     timestamp: new Date()

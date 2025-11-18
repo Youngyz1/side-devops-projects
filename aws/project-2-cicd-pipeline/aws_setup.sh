@@ -4,10 +4,10 @@
 set -e  # Exit on any error
 
 # Configuration variables
-CLUSTER_NAME="webapp-cicd-cluster"
-SERVICE_NAME="webapp-cicd-service"
-TASK_FAMILY="webapp-cicd-task"
-ECR_REPOSITORY="my-webapp"
+CLUSTER_NAME="youngyzapp-cicd-cluster"
+SERVICE_NAME="youngyzapp-cicd-service"
+TASK_FAMILY="youngyzapp-cicd-task"
+ECR_REPOSITORY="my-youngyzapp"
 AWS_REGION="us-east-1"
 GITHUB_USER_NAME="github-actions-user"
 
@@ -25,7 +25,6 @@ if ! aws sts get-caller-identity >/dev/null 2>&1; then
     echo "❌ AWS CLI not configured. Please run 'aws configure' first."
     exit 1
 fi
-
 echo "✅ AWS CLI configured"
 
 # 1. Create ECR Repository
@@ -46,13 +45,11 @@ ECR_URI=$(aws ecr describe-repositories \
     --region $AWS_REGION \
     --query 'repositories[0].repositoryUri' \
     --output text)
-
 echo "✅ ECR URI: $ECR_URI"
 
 # 2. Create IAM role for ECS task execution
 echo "🔐 Creating ECS execution role..."
 EXECUTION_ROLE_NAME="ecsTaskExecutionRole-$CLUSTER_NAME"
-
 if aws iam get-role --role-name $EXECUTION_ROLE_NAME >/dev/null 2>&1; then
     echo "✅ ECS execution role already exists"
 else
@@ -86,12 +83,16 @@ EXECUTION_ROLE_ARN=$(aws iam get-role \
 
 # 3. Create ECS cluster
 echo "🏗️ Creating ECS cluster..."
-if aws ecs describe-clusters --clusters $CLUSTER_NAME --region $AWS_REGION >/dev/null 2>&1; then
+CLUSTER_STATUS=$(aws ecs describe-clusters \
+  --clusters $CLUSTER_NAME \
+  --region $AWS_REGION \
+  --query 'clusters[0].status' \
+  --output text 2>/dev/null || echo "MISSING")
+
+if [ "$CLUSTER_STATUS" = "ACTIVE" ]; then
     echo "✅ ECS cluster already exists"
 else
-    aws ecs create-cluster \
-        --cluster-name $CLUSTER_NAME \
-        --region $AWS_REGION
+    aws ecs create-cluster --cluster-name $CLUSTER_NAME --region $AWS_REGION
     echo "✅ ECS cluster created"
 fi
 
@@ -112,36 +113,34 @@ echo "✅ Subnets: $SUBNETS"
 
 # 5. Create security group
 echo "🛡️ Creating security group..."
-SECURITY_GROUP_NAME="webapp-cicd-sg"
+SECURITY_GROUP_NAME="youngyzapp-cicd-sg"
+SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$SECURITY_GROUP_NAME" \
+    --query 'SecurityGroups[0].GroupId' \
+    --output text 2>/dev/null || echo "None")
 
-if aws ec2 describe-security-groups --filters "Name=group-name,Values=$SECURITY_GROUP_NAME" --query 'SecurityGroups[0].GroupId' --output text >/dev/null 2>&1; then
-    SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
-        --filters "Name=group-name,Values=$SECURITY_GROUP_NAME" \
-        --query 'SecurityGroups[0].GroupId' \
-        --output text)
-    echo "✅ Security group already exists: $SECURITY_GROUP_ID"
-else
+if [ "$SECURITY_GROUP_ID" = "None" ]; then
     SECURITY_GROUP_ID=$(aws ec2 create-security-group \
-        --group-name $SECURITY_GROUP_NAME \
-        --description "Security group for webapp CI/CD" \
-        --vpc-id $DEFAULT_VPC \
-        --query 'GroupId' \
-        --output text)
+      --group-name $SECURITY_GROUP_NAME \
+      --description "Security group for youngyzapp CI/CD" \
+      --vpc-id $DEFAULT_VPC \
+      --query 'GroupId' \
+      --output text)
 
-    # Add inbound rule for port 3001
     aws ec2 authorize-security-group-ingress \
-        --group-id $SECURITY_GROUP_ID \
-        --protocol tcp \
-        --port 3001 \
-        --cidr 0.0.0.0/0
+      --group-id $SECURITY_GROUP_ID \
+      --protocol tcp \
+      --port 3001 \
+      --cidr 0.0.0.0/0
 
     echo "✅ Security group created: $SECURITY_GROUP_ID"
+else
+    echo "✅ Security group already exists: $SECURITY_GROUP_ID"
 fi
 
 # 6. Create CloudWatch log group
 echo "📊 Creating CloudWatch log group..."
-LOG_GROUP_NAME="/ecs/$TASK_FAMILY"
-
+LOG_GROUP_NAME="ecs-${TASK_FAMILY//[^a-zA-Z0-9\-_]/_}"
 if aws logs describe-log-groups --log-group-name-prefix $LOG_GROUP_NAME --query 'logGroups[0].logGroupName' --output text >/dev/null 2>&1; then
     echo "✅ CloudWatch log group already exists"
 else
@@ -162,7 +161,7 @@ aws ecs register-task-definition \
     --execution-role-arn $EXECUTION_ROLE_ARN \
     --container-definitions '[
         {
-            "name": "webapp",
+            "name": "youngyzapp",
             "image": "nginx:latest",
             "portMappings": [
                 {
@@ -192,7 +191,14 @@ echo "✅ Initial task definition created"
 
 # 8. Create ECS service
 echo "🚀 Creating ECS service..."
-if aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION >/dev/null 2>&1; then
+SERVICE_STATUS=$(aws ecs describe-services \
+  --cluster $CLUSTER_NAME \
+  --services $SERVICE_NAME \
+  --region $AWS_REGION \
+  --query 'services[0].status' \
+  --output text 2>/dev/null || echo "MISSING")
+
+if [ "$SERVICE_STATUS" = "ACTIVE" ]; then
     echo "✅ ECS service already exists"
 else
     aws ecs create-service \
@@ -214,7 +220,6 @@ if aws iam get-user --user-name $GITHUB_USER_NAME >/dev/null 2>&1; then
 else
     aws iam create-user --user-name $GITHUB_USER_NAME
     
-    # Attach policies for GitHub Actions
     aws iam attach-user-policy \
         --user-name $GITHUB_USER_NAME \
         --policy-arn arn:aws:iam::aws:policy/AmazonECS_FullAccess
