@@ -65,13 +65,21 @@ jobs:
 
       - name: Debug AWS Secrets
         run: |
-          echo "AWS_ACCESS_KEY_ID length: ${#{{ secrets.AWS_ACCESS_KEY_ID }}}"
-          echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
-          echo "AWS_SECRET_ACCESS_KEY length: ${#{{ secrets.AWS_SECRET_ACCESS_KEY }}}"
-          echo "ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}"
-          echo "ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}"
-          echo "ECS_SERVICE: ${{ secrets.ECS_SERVICE }}"
-        # 🔹 This ensures secrets are loaded correctly; does not print sensitive info
+          # Assign GitHub secrets to shell variables
+          AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          AWS_REGION="${{ secrets.AWS_REGION }}"
+          ECR_REPOSITORY="${{ secrets.ECR_REPOSITORY }}"
+          ECS_CLUSTER="${{ secrets.ECS_CLUSTER }}"
+          ECS_SERVICE="${{ secrets.ECS_SERVICE }}"
+
+          # Print lengths or values safely
+          echo "✅ AWS_ACCESS_KEY_ID length: ${#AWS_ACCESS_KEY_ID}"
+          echo "✅ AWS_SECRET_ACCESS_KEY length: ${#AWS_SECRET_ACCESS_KEY}"
+          echo "🌍 AWS_REGION: $AWS_REGION"
+          echo "📦 ECR_REPOSITORY: $ECR_REPOSITORY"
+          echo "🗂 ECS_CLUSTER: $ECS_CLUSTER"
+          echo "⚙️ ECS_SERVICE: $ECS_SERVICE"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
