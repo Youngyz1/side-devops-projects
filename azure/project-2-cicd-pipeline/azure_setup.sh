@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Set your variables
-RESOURCE_GROUP_NAME="rg-webapp-deploy"
-ACR_NAME="acrwebapp$(date +%s | tail -c 6)"  # Creates unique name like acrwebapp123456
+RESOURCE_GROUP_NAME="rg-youngyzapp-deploy"
+ACR_NAME="acryoungyzapp$(date +%s | tail -c 6)"  # Creates unique name like acryoungyzapp123456
 LOCATION="eastus"
-SP_NAME="github-actions-webapp"
+SP_NAME="github-actions-youngyzapp"
 
 echo "Setting up Azure resources..."
 echo "Resource Group: $RESOURCE_GROUP_NAME"
@@ -67,4 +67,4 @@ echo "az group delete --name $RESOURCE_GROUP_NAME --yes --no-wait"
 
 
 ##    To clean up later, run: ###
-#   az group delete --name rg-webapp-deploy --yes --no-wait
+#   az group delete --name rg-youngyzapp-deploy --yes --no-wait

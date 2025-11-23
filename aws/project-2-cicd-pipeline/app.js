@@ -1,6 +1,22 @@
 const express = require('express');
+const client = require('prom-client');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Create a Prometheus Registry
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+// /metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
 
 // Simple home page
 app.get('/', (req, res) => {
@@ -13,7 +29,7 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Health check endpoint (important for ECS)
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
@@ -22,7 +38,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Simple API endpoint
+// API endpoint
 app.get('/api/info', (req, res) => {
   res.json({
     app: 'my-aws-youngyzapp',
@@ -32,7 +48,7 @@ app.get('/api/info', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`App running on port ${PORT}`);
   console.log(`Environment: ${process.env.ENVIRONMENT || 'development'}`);
 });

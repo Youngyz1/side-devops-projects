@@ -11,8 +11,8 @@ provider "azurerm" {
   features {}
 }
 
-module "dev_webapp" {
-  source = "../../modules/webapp"
+module "dev_youngyzapp" {
+  source = "../../modules/youngyzapp"
   
   environment     = "dev"
   app_name       = "myapp"

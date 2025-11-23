@@ -12,24 +12,24 @@ output "environment" {
 
 output "cluster_name" {
   description = "ECS cluster name"
-  value       = module.webapp.cluster_name
+  value       = module.youngyzapp.cluster_name
 }
 
 output "service_name" {
   description = "ECS service name"
-  value       = module.webapp.service_name
+  value       = module.youngyzapp.service_name
 }
 
 output "log_group_name" {
   description = "CloudWatch log group"
-  value       = module.webapp.log_group_name
+  value       = module.youngyzapp.log_group_name
 }
 
 output "console_urls" {
   description = "AWS console URLs"
   value = {
-    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}"
-    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.webapp.log_group_name, "/", "%2F")}"
+    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}"
+    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.youngyzapp.log_group_name, "/", "%2F")}"
   }
 }
 
@@ -45,13 +45,13 @@ Next steps:
 4. Test your application: http://[PUBLIC_IP]
 
 To get the public IP via CLI:
-aws ecs list-tasks --cluster ${module.webapp.cluster_name} --service-name ${module.webapp.service_name}
+aws ecs list-tasks --cluster ${module.youngyzapp.cluster_name} --service-name ${module.youngyzapp.service_name}
 EOF
 }
 
 locals {
   console_urls = {
-    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}"
-    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.webapp.log_group_name, "/", "%2F")}"
+    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}"
+    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.youngyzapp.log_group_name, "/", "%2F")}"
   }
 }

@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-webapp
+  name: my-youngyzapp
   labels:
-    app: my-webapp
+    app: my-youngyzapp
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: my-webapp
+      app: my-youngyzapp
   template:
     metadata:
       labels:
-        app: my-webapp
+        app: my-youngyzapp
     spec:
       containers:
-      - name: my-webapp
-        image: my-webapp:latest
+      - name: my-youngyzapp
+        image: my-youngyzapp:latest
         imagePullPolicy: Never  # This tells K8s to use local images only
         resources:
           limits:
@@ -34,10 +34,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-webapp-service
+  name: my-youngyzapp-service
 spec:
   selector:
-    app: my-webapp
+    app: my-youngyzapp
   ports:
   - protocol: TCP
     port: 8080
@@ -47,12 +47,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: my-webapp-hpa
+  name: my-youngyzapp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: my-webapp
+    name: my-youngyzapp
   minReplicas: 2
   maxReplicas: 10
   metrics:

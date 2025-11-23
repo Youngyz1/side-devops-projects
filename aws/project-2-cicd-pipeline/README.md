@@ -46,7 +46,7 @@ npm start
 
 ```bash
 docker build -t my-youngyzapp .
-docker run -p 3001:3001 -e ENVIRONMENT=local my-webapp
+docker run -p 3001:3001 -e ENVIRONMENT=local my-youngyzapp
 ```
 
 * Visit: [http://localhost:3001](http://localhost:3001)

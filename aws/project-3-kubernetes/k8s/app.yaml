@@ -1,25 +1,26 @@
-# Kubernetes configuration for your webapp
+# Kubernetes configuration for your youngyzapp
 
 # Deployment - manages your app pods
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-webapp
+  name: my-youngyzapp
   labels:
-    app: my-webapp
+    app: my-youngyzapp
 spec:
-  replicas: 3
+  replicas: 5   # Updated default replicas for testing scaling
   selector:
     matchLabels:
-      app: my-webapp
+      app: my-youngyzapp
   template:
     metadata:
       labels:
-        app: my-webapp
+        app: my-youngyzapp
     spec:
       containers:
-      - name: webapp
-        image: my-webapp:latest
+      - name: youngyzapp
+        image: 958421185668.dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
+        imagePullPolicy: IfNotPresent  # Important for local Minikube image
         ports:
         - containerPort: 3001
         env:
@@ -48,13 +49,14 @@ spec:
           periodSeconds: 5
 
 ---
+
 # Service - exposes your app to the internet
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-webapp-service
+  name: my-youngyzapp-service
   labels:
-    app: my-webapp
+    app: my-youngyzapp
 spec:
   type: LoadBalancer
   ports:
@@ -62,30 +64,32 @@ spec:
     targetPort: 3001
     protocol: TCP
   selector:
-    app: my-webapp
+    app: my-youngyzapp
 
 ---
+
 # ConfigMap - configuration data
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: webapp-config
+  name: youngyzapp-config
 data:
   environment: "kubernetes"
-  app_name: "my-webapp"
+  app_name: "my-youngyzapp"
   port: "3001"
 
 ---
+
 # Optional: Horizontal Pod Autoscaler
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: my-webapp-hpa
+  name: my-youngyzapp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: my-webapp
+    name: my-youngyzapp
   minReplicas: 2
   maxReplicas: 10
   metrics:

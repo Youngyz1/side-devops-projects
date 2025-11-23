@@ -1,4 +1,4 @@
-# Dockerfile - Instructions to build your container
+# Dockerfile - Optimized for Minikube builds without internet
 
 FROM node:18-alpine
 
@@ -8,8 +8,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --only=production
+# Copy pre-installed dependencies
+COPY node_modules ./node_modules
 
 # Copy application code
 COPY . .
@@ -19,7 +19,7 @@ EXPOSE 3001
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD wget -qO- http://localhost:3001/health || exit 1
 
 # Start the application
 CMD ["npm", "start"]

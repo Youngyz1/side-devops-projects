@@ -70,8 +70,8 @@ eval $(minikube docker-env)
 ### 2. Build Your Docker Image
 
 ```bash
-docker build -t my-webapp:latest .
-docker images | grep my-webapp
+docker build -t my-youngyzapp:latest .
+docker images | grep my-youngyzapp
 ```
 
 ### 3. Deploy to Kubernetes
@@ -88,14 +88,14 @@ kubectl get pods -w
 #### For Docker Desktop:
 
 ```bash
-kubectl get services my-webapp-service
+kubectl get services my-youngyzapp-service
 # Use the EXTERNAL-IP shown
 ```
 
 #### For Minikube:
 
 ```bash
-minikube service my-webapp-service --url
+minikube service my-youngyzapp-service --url
 ```
 
 ### 5. Test Kubernetes Features
@@ -103,9 +103,9 @@ minikube service my-webapp-service --url
 **Scaling:**
 
 ```bash
-kubectl scale deployment my-webapp --replicas=5
+kubectl scale deployment my-youngyzapp --replicas=5
 kubectl get pods -w
-kubectl scale deployment my-webapp --replicas=2
+kubectl scale deployment my-youngyzapp --replicas=2
 ```
 
 **Self-healing:**
@@ -118,8 +118,8 @@ kubectl get pods -w
 **Rolling updates:**
 
 ```bash
-kubectl set image deployment/my-webapp webapp=my-webapp:v2
-kubectl rollout status deployment/my-webapp
+kubectl set image deployment/my-youngyzapp youngyzapp=my-youngyzapp:v2
+kubectl rollout status deployment/my-youngyzapp
 ```
 
 ## Option B: AWS EKS Setup (Optional)
@@ -135,8 +135,8 @@ chmod +x eks-setup.sh
 
 ```bash
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com
-docker tag my-webapp:latest [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-webapp:latest
-docker push [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-webapp:latest
+docker tag my-youngyzapp:latest [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
+docker push [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
 ```
 
 ### 3. Update EKS Configuration
@@ -155,7 +155,7 @@ kubectl logs [POD-NAME]
 kubectl logs -f [POD-NAME]
 kubectl exec -it [POD-NAME] -- /bin/sh
 kubectl get events --sort-by=.metadata.creationTimestamp
-kubectl port-forward service/my-webapp-service 8080:80
+kubectl port-forward service/my-youngyzapp-service 8080:80
 kubectl delete -f k8s/app.yaml
 ```
 
@@ -201,8 +201,8 @@ minikube status
 
 ```bash
 eval $(minikube docker-env)
-docker build -t my-webapp:latest .
-docker images | grep my-webapp
+docker build -t my-youngyzapp:latest .
+docker images | grep my-youngyzapp
 ```
 
 #### "Pods stuck in Pending"
@@ -218,7 +218,7 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 
 ```bash
 kubectl get services
-minikube service my-webapp-service --url
+minikube service my-youngyzapp-service --url
 kubectl get pods
 kubectl logs [POD-NAME]
 ```
@@ -261,7 +261,7 @@ minikube delete
 
 ```bash
 kubectl delete -f k8s/app.yaml
-eksctl delete cluster --name my-webapp-cluster --region us-east-1
+eksctl delete cluster --name my-youngyzapp-cluster --region us-east-1
 ```
 
 ## What You Learned

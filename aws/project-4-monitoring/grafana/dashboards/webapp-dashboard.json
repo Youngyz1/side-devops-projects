@@ -2,7 +2,7 @@
     "dashboard": {
       "id": null,
       "title": "My Web Application Dashboard",
-      "tags": ["webapp", "devops"],
+      "tags": ["youngyzapp", "devops"],
       "timezone": "browser",
       "panels": [
         {
@@ -11,7 +11,7 @@
           "type": "stat",
           "targets": [
             {
-              "expr": "up{job=\"my-webapp-local\"}",
+              "expr": "up{job=\"my-youngyzapp-local\"}",
               "refId": "A"
             }
           ],

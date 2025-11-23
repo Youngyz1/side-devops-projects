@@ -1,0 +1,18 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-youngyzapp-cluster
+  region: us-east-1
+  version: "1.32"
+
+nodeGroups:
+  - name: ng-5e722389-new
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true

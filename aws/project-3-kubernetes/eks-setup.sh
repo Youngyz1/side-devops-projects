@@ -3,9 +3,9 @@
 
 set -e
 
-CLUSTER_NAME="my-webapp-cluster"
+CLUSTER_NAME="my-youngyzapp-cluster"
 REGION="us-east-1"
-NODE_GROUP_NAME="my-webapp-nodes"
+NODE_GROUP_NAME="my-youngyzapp-nodes"
 
 echo "Setting up EKS cluster: $CLUSTER_NAME in $REGION"
 

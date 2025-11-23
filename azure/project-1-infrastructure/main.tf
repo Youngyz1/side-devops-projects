@@ -21,15 +21,15 @@ resource "azurerm_resource_group" "main" {
 }
 
 # Create a simple web app
-resource "azurerm_container_group" "webapp" {
-  name                = "my-first-webapp"
+resource "azurerm_container_group" "youngyzapp" {
+  name                = "my-first-youngyzapp"
   location           = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   ip_address_type     = "Public"
   os_type            = "Linux"
 
   container {
-    name   = "webapp"
+    name   = "youngyzapp"
     image  = "mcr.microsoft.com/oss/nginx/nginx:1.15.5-alpine"
     cpu    = "0.5"
     memory = "1.5"

@@ -1,4 +1,4 @@
-# Reusable ECS webapp module
+# Reusable ECS youngyzapp module
 
 terraform {
   required_providers {

@@ -26,7 +26,7 @@ Before you begin, ensure you have:
 ```
 project-5-multi-environment/
 ├── modules/
-│   └── webapp/                    # Reusable webapp module
+│   └── youngyzapp/                    # Reusable youngyzapp module
 │       ├── main.tf               # Core infrastructure resources
 │       ├── variables.tf          # Configurable parameters
 │       ├── outputs.tf            # Module outputs
@@ -95,20 +95,20 @@ terraform apply
 # Type 'yes' when prompted
 
 # Get the development URL
-terraform output webapp_url
+terraform output youngyzapp_url
 ```
 
 ### 3. Test Development Environment
 
 ```bash
 # Test the application
-curl $(terraform output -raw webapp_url)
+curl $(terraform output -raw youngyzapp_url)
 
 # Check application health
-curl $(terraform output -raw webapp_url)/health
+curl $(terraform output -raw youngyzapp_url)/health
 
 # View in browser
-echo "Development app: $(terraform output -raw webapp_url)"
+echo "Development app: $(terraform output -raw youngyzapp_url)"
 ```
 
 ### 4. Deploy Production Environment
@@ -128,7 +128,7 @@ terraform apply
 # Type 'yes' when prompted
 
 # Get the production URL
-terraform output webapp_url
+terraform output youngyzapp_url
 ```
 
 ### 5. Compare Environments
@@ -144,11 +144,11 @@ terraform show | grep -A 5 "azurerm_container_group"
 
 ## ⚙️ Module Configuration
 
-### webapp Module (modules/webapp/main.tf)
+### youngyzapp Module (modules/youngyzapp/main.tf)
 
 ```hcl
 # Resource Group
-resource "azurerm_resource_group" "webapp" {
+resource "azurerm_resource_group" "youngyzapp" {
   name     = "${var.environment}-${var.app_name}-rg"
   location = var.location
   
@@ -160,10 +160,10 @@ resource "azurerm_resource_group" "webapp" {
 }
 
 # Container Group
-resource "azurerm_container_group" "webapp" {
+resource "azurerm_container_group" "youngyzapp" {
   name                = "${var.environment}-${var.app_name}"
-  location            = azurerm_resource_group.webapp.location
-  resource_group_name = azurerm_resource_group.webapp.name
+  location            = azurerm_resource_group.youngyzapp.location
+  resource_group_name = azurerm_resource_group.youngyzapp.name
   ip_address_type     = "Public"
   os_type             = "Linux"
 
@@ -192,7 +192,7 @@ resource "azurerm_container_group" "webapp" {
 
 #### Development (environments/dev/terraform.tfvars)
 ```hcl
-app_name         = "mywebapp"
+app_name         = "myyoungyzapp"
 environment      = "dev"
 location         = "East US"
 container_image  = "nginx:latest"
@@ -208,7 +208,7 @@ environment_variables = {
 
 #### Production (environments/prod/terraform.tfvars)
 ```hcl
-app_name         = "mywebapp"
+app_name         = "myyoungyzapp"
 environment      = "prod"
 location         = "East US"
 container_image  = "nginx:latest"
@@ -231,7 +231,7 @@ environment_variables = {
 dynamic "network_profile" {
   for_each = var.environment == "prod" ? [1] : []
   content {
-    id = azurerm_network_profile.webapp[0].id
+    id = azurerm_network_profile.youngyzapp[0].id
   }
 }
 ```
@@ -240,11 +240,11 @@ dynamic "network_profile" {
 
 ```hcl
 # Monitoring only in production
-resource "azurerm_application_insights" "webapp" {
+resource "azurerm_application_insights" "youngyzapp" {
   count               = var.environment == "prod" ? 1 : 0
   name                = "${var.environment}-${var.app_name}-insights"
-  location            = azurerm_resource_group.webapp.location
-  resource_group_name = azurerm_resource_group.webapp.name
+  location            = azurerm_resource_group.youngyzapp.location
+  resource_group_name = azurerm_resource_group.youngyzapp.name
   application_type    = "web"
 }
 ```
@@ -253,7 +253,7 @@ resource "azurerm_application_insights" "webapp" {
 
 ### ❌ Module Not Found Error
 
-**Error**: `Module not found: ./modules/webapp`
+**Error**: `Module not found: ./modules/youngyzapp`
 
 **Solutions**:
 ```bash
@@ -262,7 +262,7 @@ pwd
 # Should be in: /path/to/project-5-multi-environment/environments/dev
 
 # Verify module exists
-ls ../../modules/webapp/
+ls ../../modules/youngyzapp/
 # Should show: main.tf, variables.tf, outputs.tf
 ```
 
@@ -289,7 +289,7 @@ app_name = "myapp-v2"
 **Solutions**:
 ```bash
 # Check outputs are defined in module
-cat ../../modules/webapp/outputs.tf
+cat ../../modules/youngyzapp/outputs.tf
 
 # Use Azure CLI as alternative
 az container show \
@@ -328,7 +328,7 @@ rm -rf .terraform .terraform.lock.hcl
 terraform init
 
 # Verify module paths
-ls ../../modules/webapp/main.tf
+ls ../../modules/youngyzapp/main.tf
 ```
 
 ### ❌ Container Won't Start

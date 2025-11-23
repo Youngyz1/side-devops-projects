@@ -25,7 +25,7 @@ Before you begin, ensure you have:
 ## 📁 Project Structure
 
 ```
-my-devops-webapp/
+my-devops-youngyzapp/
 ├── app.js                      # Main application file
 ├── package.json                # Node.js dependencies
 ├── package-lock.json           # Dependency lock file
@@ -40,8 +40,8 @@ my-devops-webapp/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/my-devops-webapp.git
-cd my-devops-webapp
+git clone https://github.com/yourusername/my-devops-youngyzapp.git
+cd my-devops-youngyzapp
 
 # Install dependencies
 npm install
@@ -137,10 +137,10 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) includes:
 
 ```bash
 # Build the Docker image
-docker build -t my-webapp .
+docker build -t my-youngyzapp .
 
 # Run the container
-docker run -p 3001:3001 my-webapp
+docker run -p 3001:3001 my-youngyzapp
 
 # Access at http://localhost:3001
 ```
@@ -187,7 +187,7 @@ docker --version
 docker ps
 
 # Try building again
-docker build -t my-webapp .
+docker build -t my-youngyzapp .
 ```
 
 #### ❌ Azure Setup Script Fails
@@ -217,17 +217,17 @@ az provider register --namespace Microsoft.ContainerRegistry
 
 2. **Check deployment status:**
    ```bash
-   az container list --resource-group rg-webapp-deploy --output table
+   az container list --resource-group rg-youngyzapp-deploy --output table
    ```
 
 3. **Get the correct URL:**
    ```bash
-   az container show --resource-group rg-webapp-deploy --name <APP_NAME> --query ipAddress.fqdn --output tsv
+   az container show --resource-group rg-youngyzapp-deploy --name <APP_NAME> --query ipAddress.fqdn --output tsv
    ```
 
 4. **Check container logs:**
    ```bash
-   az container logs --resource-group rg-webapp-deploy --name <APP_NAME>
+   az container logs --resource-group rg-youngyzapp-deploy --name <APP_NAME>
    ```
 
 ## 📊 Monitoring and Metrics
@@ -244,7 +244,7 @@ To avoid ongoing Azure charges:
 
 ```bash
 # Delete the resource group and all resources
-az group delete --name rg-webapp-deploy --yes --no-wait
+az group delete --name rg-youngyzapp-deploy --yes --no-wait
 ```
 
 ## 🎓 What You've Learned

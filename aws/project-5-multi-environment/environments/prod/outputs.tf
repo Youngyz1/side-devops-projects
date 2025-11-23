@@ -7,17 +7,17 @@ output "environment" {
 
 output "cluster_name" {
   description = "ECS cluster name"
-  value       = module.webapp.cluster_name
+  value       = module.youngyzapp.cluster_name
 }
 
 output "service_name" {
   description = "ECS service name"
-  value       = module.webapp.service_name
+  value       = module.youngyzapp.service_name
 }
 
 output "log_group_name" {
   description = "CloudWatch log group"
-  value       = module.webapp.log_group_name
+  value       = module.youngyzapp.log_group_name
 }
 
 output "autoscaling_enabled" {
@@ -28,9 +28,9 @@ output "autoscaling_enabled" {
 output "console_urls" {
   description = "AWS console URLs"
   value = {
-    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}"
-    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.webapp.log_group_name, "/", "%2F")}"
-    autoscaling = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}/services/${module.webapp.service_name}/autoscaling"
+    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}"
+    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.youngyzapp.log_group_name, "/", "%2F")}"
+    autoscaling = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}/services/${module.youngyzapp.service_name}/autoscaling"
   }
 }
 
@@ -61,8 +61,8 @@ EOF
 
 locals {
   console_urls = {
-    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}"
-    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.webapp.log_group_name, "/", "%2F")}"
-    autoscaling = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.webapp.cluster_name}/services/${module.webapp.service_name}/autoscaling"
+    ecs_cluster = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}"
+    logs        = "https://console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#logsV2:log-groups/log-group/${replace(module.youngyzapp.log_group_name, "/", "%2F")}"
+    autoscaling = "https://console.aws.amazon.com/ecs/home?region=${var.aws_region}#/clusters/${module.youngyzapp.cluster_name}/services/${module.youngyzapp.service_name}/autoscaling"
   }
 }

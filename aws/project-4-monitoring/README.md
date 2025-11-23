@@ -112,7 +112,7 @@ npm start
 ```
 
 * Visit Prometheus Targets: [http://localhost:9090/targets](http://localhost:9090/targets)
-* Create a dashboard using `webapp-dashboard.json` or build custom panels
+* Create a dashboard using `youngyzapp-dashboard.json` or build custom panels
 
 ---
 
@@ -122,10 +122,10 @@ Create `alert_rules.yml`:
 
 ```yaml
 groups:
-  - name: webapp_alerts
+  - name: youngyzapp_alerts
     rules:
-      - alert: WebAppDown
-        expr: up{job="my-webapp-local"} == 0
+      - alert: youngyzappDown
+        expr: up{job="my-youngyzapp-local"} == 0
         for: 1m
         labels:
           severity: critical
@@ -208,7 +208,7 @@ kubectl apply -f https://github.com/kubernetes/kube-state-metrics/examples/stand
 **App Uptime**
 
 ```promql
-up{job="my-webapp-local"}
+up{job="my-youngyzapp-local"}
 ```
 
 ---

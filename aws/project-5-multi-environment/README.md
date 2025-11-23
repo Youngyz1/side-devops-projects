@@ -34,7 +34,7 @@ Your AWS user/role needs these permissions:
 ```
 project-5-multi-environment/
 ├── modules/
-│   └── ecs-webapp/                # Reusable ECS infrastructure module
+│   └── ecs-youngyzapp/                # Reusable ECS infrastructure module
 │       ├── main.tf               # ECS cluster, service, task definitions
 │       ├── variables.tf          # Configurable parameters
 │       ├── outputs.tf            # Module outputs (URLs, ARNs)
@@ -146,9 +146,9 @@ cd ../..
 
 ## ⚙️ Module Configuration
 
-### ECS WebApp Module
+### ECS youngyzapp Module
 
-The `modules/ecs-webapp/` creates:
+The `modules/ecs-youngyzapp/` creates:
 
 #### Core Infrastructure
 ```hcl
@@ -163,21 +163,21 @@ resource "aws_ecs_cluster" "main" {
 }
 
 # ECS Service with Fargate
-resource "aws_ecs_service" "webapp" {
+resource "aws_ecs_service" "youngyzapp" {
   name            = "${var.environment}-${var.app_name}-service"
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.webapp.arn
+  task_definition = aws_ecs_task_definition.youngyzapp.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets          = var.subnet_ids
-    security_groups  = [aws_security_group.webapp.id]
+    security_groups  = [aws_security_group.youngyzapp.id]
     assign_public_ip = true
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.webapp.arn
+    target_group_arn = aws_lb_target_group.youngyzapp.arn
     container_name   = var.app_name
     container_port   = var.container_port
   }
@@ -188,7 +188,7 @@ resource "aws_ecs_service" "webapp" {
 
 **Development (environments/dev/terraform.tfvars)**
 ```hcl
-app_name             = "mywebapp"
+app_name             = "myyoungyzapp"
 environment          = "dev"
 aws_region           = "us-east-1"
 container_image      = "nginx:latest"
@@ -212,7 +212,7 @@ environment_variables = [
 
 **Production (environments/prod/terraform.tfvars)**
 ```hcl
-app_name             = "mywebapp"
+app_name             = "myyoungyzapp"
 environment          = "prod"
 aws_region           = "us-east-1"
 container_image      = "nginx:latest"
@@ -242,7 +242,7 @@ environment_variables = [
 
 ```hcl
 # CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "webapp" {
+resource "aws_cloudwatch_log_group" "youngyzapp" {
   name              = "/ecs/${var.environment}-${var.app_name}"
   retention_in_days = var.log_retention_days
 }
@@ -268,15 +268,15 @@ resource "aws_appautoscaling_policy" "scale_up" {
 
 ```bash
 # View ECS cluster status
-aws ecs describe-clusters --clusters dev-mywebapp-cluster
+aws ecs describe-clusters --clusters dev-myyoungyzapp-cluster
 
 # Check service status
 aws ecs describe-services \
-  --cluster dev-mywebapp-cluster \
-  --services dev-mywebapp-service
+  --cluster dev-myyoungyzapp-cluster \
+  --services dev-myyoungyzapp-service
 
 # View application logs
-aws logs tail /ecs/dev-mywebapp --follow
+aws logs tail /ecs/dev-myyoungyzapp --follow
 
 # Monitor auto-scaling
 aws application-autoscaling describe-scaling-activities \
@@ -290,8 +290,8 @@ aws application-autoscaling describe-scaling-activities \
 ```bash
 # Scale development environment
 aws ecs update-service \
-  --cluster dev-mywebapp-cluster \
-  --service dev-mywebapp-service \
+  --cluster dev-myyoungyzapp-cluster \
+  --service dev-myyoungyzapp-service \
   --desired-count 2
 
 # Production auto-scales automatically based on CPU/memory
@@ -335,17 +335,17 @@ max_capacity = 3
 **Check task definition:**
 ```bash
 aws ecs describe-task-definition \
-  --task-definition dev-mywebapp:1
+  --task-definition dev-myyoungyzapp:1
 
 # Check task status
 aws ecs list-tasks \
-  --cluster dev-mywebapp-cluster \
-  --service-name dev-mywebapp-service
+  --cluster dev-myyoungyzapp-cluster \
+  --service-name dev-myyoungyzapp-service
 
 # View task logs
 aws logs get-log-events \
-  --log-group-name /ecs/dev-mywebapp \
-  --log-stream-name ecs/mywebapp/[TASK-ID]
+  --log-group-name /ecs/dev-myyoungyzapp \
+  --log-stream-name ecs/myyoungyzapp/[TASK-ID]
 ```
 
 ### ❌ Load Balancer Health Check Fails
@@ -368,7 +368,7 @@ aws ec2 describe-security-groups \
 pwd  # Should be in environments/dev or environments/prod
 
 # Check module exists
-ls ../../modules/ecs-webapp/main.tf
+ls ../../modules/ecs-youngyzapp/main.tf
 ```
 
 ### ❌ AWS Permissions Issues
@@ -393,7 +393,7 @@ rm -rf .terraform .terraform.lock.hcl
 terraform init
 
 # Import existing resources if needed
-terraform import aws_ecs_cluster.main dev-mywebapp-cluster
+terraform import aws_ecs_cluster.main dev-myyoungyzapp-cluster
 ```
 
 ### ❌ Auto-scaling Not Working
@@ -407,7 +407,7 @@ aws application-autoscaling describe-scaling-policies \
 aws cloudwatch get-metric-statistics \
   --namespace AWS/ECS \
   --metric-name CPUUtilization \
-  --dimensions Name=ServiceName,Value=dev-mywebapp-service \
+  --dimensions Name=ServiceName,Value=dev-myyoungyzapp-service \
   --start-time 2023-01-01T00:00:00Z \
   --end-time 2023-01-01T23:59:59Z \
   --period 300 \

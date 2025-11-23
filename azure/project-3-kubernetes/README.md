@@ -24,7 +24,7 @@ Before you begin, ensure you have:
 ## 📁 Project Structure
 
 ```
-kubernetes-webapp/
+kubernetes-youngyzapp/
 ├── k8s/
 │   ├── app.yaml               # Kubernetes deployment configuration        
 ├── app.js                     # Your Node.js application
@@ -67,14 +67,14 @@ kubectl get pods --all-namespaces
 
 ```bash
 # For Docker Desktop users
-docker build -t my-webapp:latest .
+docker build -t my-youngyzapp:latest .
 
 # For Minikube users (build inside Minikube's Docker environment)
 eval $(minikube docker-env)
-docker build -t my-webapp:latest .
+docker build -t my-youngyzapp:latest .
 
 # Verify the image was built
-docker images | grep my-webapp
+docker images | grep my-youngyzapp
 ```
 
 ### 4. Deploy to Kubernetes
@@ -94,7 +94,7 @@ kubectl get services
 #### For Docker Desktop:
 ```bash
 # Check service status
-kubectl get services my-webapp-service
+kubectl get services my-youngyzapp-service
 
 # Access via LoadBalancer (may take 2-3 minutes)
 # Look for EXTERNAL-IP (usually localhost)
@@ -103,10 +103,10 @@ kubectl get services my-webapp-service
 #### For Minikube:
 ```bash
 # Get the service URL
-minikube service my-webapp-service --url
+minikube service my-youngyzapp-service --url
 
 # Or use port forwarding
-kubectl port-forward service/my-webapp-service 8080:8080
+kubectl port-forward service/my-youngyzapp-service 8080:8080
 # Then visit: http://localhost:8080
 ```
 
@@ -114,10 +114,10 @@ kubectl port-forward service/my-webapp-service 8080:8080
 
 ```bash
 # Check pod status
-kubectl get pods -l app=my-webapp
+kubectl get pods -l app=my-youngyzapp
 
 # View pod logs
-kubectl logs -l app=my-webapp
+kubectl logs -l app=my-youngyzapp
 
 # Test the health endpoint
 curl http://localhost:8080/health
@@ -131,7 +131,7 @@ kubectl top pods
 ### View Application Metrics
 ```bash
 # Get detailed pod information
-kubectl describe pods -l app=my-webapp
+kubectl describe pods -l app=my-youngyzapp
 
 # Monitor resource usage
 kubectl top pods
@@ -147,10 +147,10 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh
 
 # Inside the container, run:
-while true; do wget -q -O- http://my-webapp-service:8080/; done
+while true; do wget -q -O- http://my-youngyzapp-service:8080/; done
 
 # In another terminal, watch scaling:
-kubectl get hpa my-webapp-hpa --watch
+kubectl get hpa my-youngyzapp-hpa --watch
 ```
 
 ## 🔧 Kubernetes Configuration Details
@@ -191,16 +191,16 @@ minikube start
 
 ### ❌ Image Pull Failed
 
-**Error:** `Failed to pull image "my-webapp:latest"`
+**Error:** `Failed to pull image "my-youngyzapp:latest"`
 
 **Solution:**
 ```bash
 # Verify image exists
-docker images | grep my-webapp
+docker images | grep my-youngyzapp
 
 # For Minikube, rebuild in correct environment
 eval $(minikube docker-env)
-docker build -t my-webapp:latest .
+docker build -t my-youngyzapp:latest .
 
 # Ensure imagePullPolicy is set to Never in deployment.yaml
 ```
@@ -209,8 +209,8 @@ docker build -t my-webapp:latest .
 
 **Check pod logs:**
 ```bash
-kubectl logs -l app=my-webapp
-kubectl describe pods -l app=my-webapp
+kubectl logs -l app=my-youngyzapp
+kubectl describe pods -l app=my-youngyzapp
 ```
 
 **Common causes:**
@@ -220,7 +220,7 @@ kubectl describe pods -l app=my-webapp
 
 **Test locally:**
 ```bash
-docker run -p 3001:3001 my-webapp:latest
+docker run -p 3001:3001 my-youngyzapp:latest
 ```
 
 ### ❌ Can't Access Service
@@ -231,26 +231,26 @@ docker run -p 3001:3001 my-webapp:latest
 ```bash
 # Wait 2-3 minutes, then restart Docker Desktop
 # Use port forwarding as alternative:
-kubectl port-forward service/my-webapp-service 8080:8080
+kubectl port-forward service/my-youngyzapp-service 8080:8080
 ```
 
 **Minikube:**
 ```bash
 # Get service URL
-minikube service my-webapp-service --url
+minikube service my-youngyzapp-service --url
 ```
 
 ### ❌ WSL Port Access Issues (Windows)
 
 **Solution 1 - Port forwarding:**
 ```bash
-kubectl port-forward service/my-webapp-service 8080:8080
+kubectl port-forward service/my-youngyzapp-service 8080:8080
 # Access: http://localhost:8080
 ```
 
 **Solution 2 - Patch service port:**
 ```bash
-kubectl patch service my-webapp-service -p '{"spec":{"ports":[{"port":8080,"targetPort":3001}]}}'
+kubectl patch service my-youngyzapp-service -p '{"spec":{"ports":[{"port":8080,"targetPort":3001}]}}'
 ```
 
 ### ❌ kubectl Connection Refused
@@ -316,9 +316,9 @@ By completing this project, you've mastered:
 ```bash
 # Deployment management
 kubectl get deployments
-kubectl scale deployment my-webapp --replicas=5
-kubectl rollout status deployment/my-webapp
-kubectl rollout restart deployment/my-webapp
+kubectl scale deployment my-youngyzapp --replicas=5
+kubectl rollout status deployment/my-youngyzapp
+kubectl rollout restart deployment/my-youngyzapp
 
 # Pod management
 kubectl get pods -o wide
@@ -327,12 +327,12 @@ kubectl port-forward <pod-name> 8080:3001
 
 # Service management
 kubectl get services
-kubectl describe service my-webapp-service
+kubectl describe service my-youngyzapp-service
 
 # Troubleshooting
-kubectl logs -f -l app=my-webapp
+kubectl logs -f -l app=my-youngyzapp
 kubectl get events --sort-by=.metadata.creationTimestamp
-kubectl describe pods -l app=my-webapp
+kubectl describe pods -l app=my-youngyzapp
 ```
 
 ---

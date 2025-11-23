@@ -34,7 +34,7 @@ This repository contains 5 beginner-to-intermediate DevOps projects designed to 
 1. Install Node.js and Docker Desktop
 2. Clone this repo and go to `project-2-cicd-pipeline`
 3. Run `npm install` and `npm start` to test locally
-4. Build Docker image with `docker build -t my-webapp .`
+4. Build Docker image with `docker build -t my-youngyzapp .`
 5. Push code to GitHub repository
 6. Run `azure_setup.sh` to create ACR and service principal
 7. Add required secrets to GitHub Actions: `AZURE_CREDENTIALS`, `ACR_NAME`, etc.

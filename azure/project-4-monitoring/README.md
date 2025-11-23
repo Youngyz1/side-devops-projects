@@ -93,7 +93,7 @@ If you have your web app from previous projects running:
 
 1. **Update prometheus.yml** to include your app:
    ```yaml
-   - job_name: 'my-webapp'
+   - job_name: 'my-youngyzapp'
      static_configs:
        - targets: ['host.docker.internal:3001']
      metrics_path: '/metrics'
@@ -114,18 +114,18 @@ If you have your web app from previous projects running:
 - `prometheus_tsdb_head_series` - Number of series in memory
 - `up` - Target availability (1=up, 0=down)
 
-### Custom Application Metrics (if webapp configured)
-- `webapp_requests_total` - Total HTTP requests
-- `webapp_uptime_seconds` - Application uptime
-- `webapp_memory_usage_bytes` - Memory consumption
+### Custom Application Metrics (if youngyzapp configured)
+- `youngyzapp_requests_total` - Total HTTP requests
+- `youngyzapp_uptime_seconds` - Application uptime
+- `youngyzapp_memory_usage_bytes` - Memory consumption
 
 ### Useful Grafana Queries
 ```promql
 # Request rate per second
-rate(webapp_requests_total[5m])
+rate(youngyzapp_requests_total[5m])
 
 # Memory usage in MB
-webapp_memory_usage_bytes / 1024 / 1024
+youngyzapp_memory_usage_bytes / 1024 / 1024
 
 # Service availability percentage
 avg_over_time(up[1h]) * 100
@@ -144,7 +144,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
   
-  - job_name: 'my-webapp'
+  - job_name: 'my-youngyzapp'
     static_configs:
       - targets: ['host.docker.internal:3001']
 ```
@@ -245,13 +245,13 @@ deploy:
 ### Application Performance Dashboard
 ```promql
 # Request Rate
-rate(webapp_requests_total[5m])
+rate(youngyzapp_requests_total[5m])
 
 # Error Rate
-rate(webapp_errors_total[5m]) / rate(webapp_requests_total[5m])
+rate(youngyzapp_errors_total[5m]) / rate(youngyzapp_requests_total[5m])
 
 # Response Time P95
-histogram_quantile(0.95, webapp_request_duration_seconds_bucket)
+histogram_quantile(0.95, youngyzapp_request_duration_seconds_bucket)
 ```
 
 ### System Resource Dashboard

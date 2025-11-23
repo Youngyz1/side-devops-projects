@@ -43,29 +43,29 @@
     
     res.set('Content-Type', 'text/plain');
     res.send(`
-  # HELP webapp_requests_total Total number of requests
-  # TYPE webapp_requests_total counter
-  webapp_requests_total ${requestCount}
+  # HELP youngyzapp_requests_total Total number of requests
+  # TYPE youngyzapp_requests_total counter
+  youngyzapp_requests_total ${requestCount}
   
-  # HELP webapp_health_checks_total Total number of health checks
-  # TYPE webapp_health_checks_total counter
-  webapp_health_checks_total ${healthCheckCount}
+  # HELP youngyzapp_health_checks_total Total number of health checks
+  # TYPE youngyzapp_health_checks_total counter
+  youngyzapp_health_checks_total ${healthCheckCount}
   
-  # HELP webapp_uptime_seconds Application uptime in seconds
-  # TYPE webapp_uptime_seconds gauge
-  webapp_uptime_seconds ${uptimeSeconds}
+  # HELP youngyzapp_uptime_seconds Application uptime in seconds
+  # TYPE youngyzapp_uptime_seconds gauge
+  youngyzapp_uptime_seconds ${uptimeSeconds}
   
-  # HELP webapp_process_uptime_seconds Process uptime in seconds
-  # TYPE webapp_process_uptime_seconds gauge
-  webapp_process_uptime_seconds ${process.uptime()}
+  # HELP youngyzapp_process_uptime_seconds Process uptime in seconds
+  # TYPE youngyzapp_process_uptime_seconds gauge
+  youngyzapp_process_uptime_seconds ${process.uptime()}
   
-  # HELP webapp_memory_usage_bytes Memory usage in bytes
-  # TYPE webapp_memory_usage_bytes gauge
-  webapp_memory_usage_bytes ${process.memoryUsage().heapUsed}
+  # HELP youngyzapp_memory_usage_bytes Memory usage in bytes
+  # TYPE youngyzapp_memory_usage_bytes gauge
+  youngyzapp_memory_usage_bytes ${process.memoryUsage().heapUsed}
   
-  # HELP webapp_up Application is running
-  # TYPE webapp_up gauge
-  webapp_up 1
+  # HELP youngyzapp_up Application is running
+  # TYPE youngyzapp_up gauge
+  youngyzapp_up 1
     `);
   });
   

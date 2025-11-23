@@ -9,8 +9,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # Your webapp running in Kubernetes
-  - job_name: 'my-webapp'
+  # Your youngyzapp running in Kubernetes
+  - job_name: 'my-youngyzapp'
     static_configs:
       - targets: ['host.docker.internal:8080']  # Using the service port
     metrics_path: '/metrics'
@@ -26,6 +26,6 @@ scrape_configs:
 #       - targets: ['localhost:9090']
   
 #   # Monitor your web app (when running)
-#   - job_name: 'my-webapp'
+#   - job_name: 'my-youngyzapp'
 #     static_configs:
 #       - targets: ['host.docker.internal:3001']

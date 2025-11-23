@@ -1,9 +1,9 @@
-output "webapp_url" {
+output "youngyzapp_url" {
   description = "The public URL of the web application in dev environment"
-  value       = module.dev_webapp.webapp_url
+  value       = module.dev_youngyzapp.youngyzapp_url
 }
 
-output "webapp_ip" {
+output "youngyzapp_ip" {
   description = "The public IP address of the web application in dev environment"
-  value       = module.dev_webapp.webapp_ip
+  value       = module.dev_youngyzapp.youngyzapp_ip
 }

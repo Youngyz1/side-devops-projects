@@ -51,7 +51,7 @@ Edit `terraform.tfvars` to personalize your deployment:
 # Example terraform.tfvars
 resource_group_name = "rg-yourname-devops"
 location           = "East US"
-container_name     = "my-webapp"
+container_name     = "my-youngyzapp"
 ```
 
 ### 3. Deploy Infrastructure

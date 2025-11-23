@@ -16,14 +16,14 @@ provider "aws" {
   default_tags {
     tags = {
       Environment = "dev"
-      Project     = "multi-env-webapp"
+      Project     = "multi-env-youngyzapp"
       ManagedBy   = "terraform"
     }
   }
 }
 
-module "webapp" {
-  source = "../../modules/ecs-webapp"
+module "youngyzapp" {
+  source = "../../modules/ecs-youngyzapp"
 
   environment     = "dev"
   app_name       = var.app_name
