@@ -1,289 +1,157 @@
-# Project 2: Automated Deployment Pipeline (AWS)
+## **Project Overview**
 
-A complete CI/CD pipeline that automatically tests and deploys your Node.js app to AWS ECS.
+Project 2 is a Node.js application deployed on **AWS ECS Fargate** using a CI/CD pipeline configured with **GitHub Actions**. This documentation details the setup, deployment, and cleanup process for the project.
 
----
+## **1. GitHub Actions Workflow**
 
-## 🌐 What This Creates
+The workflow automates testing, Docker image building, pushing to **ECR**, and deployment to ECS.
 
-* Node.js web application with health checks
-* Automated testing on every code push
-* Docker containerization
-* AWS ECR for container storage
-* AWS ECS Fargate for hosting
-* Complete CI/CD pipeline with GitHub Actions
-* Live production URL
-
----
-
-## 🛠️ Prerequisites
-
-* [Node.js](https://nodejs.org/) v18+
-* [Docker Desktop](https://www.docker.com/products/docker-desktop)
-* [AWS CLI](https://aws.amazon.com/cli/) v2
-* [Git](https://git-scm.com/)
-* GitHub account
-* AWS account (free tier works!)
-
----
-
-## 📅 Step-by-Step Setup
-
-### ✅ Step 1: Test Locally First
-
-```bash
-npm install
-npm start
-```
-
-* Open: [http://localhost:3001](http://localhost:3001)
-* Health check: [http://localhost:3001/health](http://localhost:3001/health)
-* API endpoint: [http://localhost:3001/api/info](http://localhost:3001/api/info)
-
----
-
-### ✅ Step 2: Test Docker Build
-
-```bash
-docker build -t my-youngyzapp .
-docker run -p 3001:3001 -e ENVIRONMENT=local my-youngyzapp
-```
-
-* Visit: [http://localhost:3001](http://localhost:3001)
-
----
-
-### ✅ Step 3: Set Up AWS Infrastructure
-
-```bash
-aws configure
-aws sts get-caller-identity
-chmod +x aws-setup.sh
-./aws-setup.sh
-```
-
-* Save all outputs to use in GitHub secrets
-
----
-
-### ✅ Step 4: Add GitHub Repository Secrets
-
-Go to:
-
-* Settings → Secrets and variables → Actions
-
-Add these secrets:
-
-| Secret Name              | Value from Script   | Description                |
-| ------------------------ | ------------------- | -------------------------- |
-| AWS\_ACCESS\_KEY\_ID     | output              | GitHub Actions AWS access  |
-| AWS\_SECRET\_ACCESS\_KEY | output              | GitHub Actions AWS secret  |
-| AWS\_REGION              | us-east-1           | AWS region                 |
-| ECR\_REPOSITORY          | my-youngyzapp           | Container registry name    |
-| ECS\_CLUSTER             | youngyzapp-cicd-cluster | ECS cluster name           |
-| ECS\_SERVICE             | youngyzapp-cicd-service | ECS service name           |
-| ECS\_TASK\_DEFINITION    | youngyzapp-cicd-task    | ECS task definition family |
-
----
-
-### ✅ Step 5: Deploy via GitHub
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: AWS DevOps youngyzapp with CI/CD"
-git branch -M main
-git remote add origin https://github.com/YOURUSERNAME/YOURREPO.git
-git push -u origin main
-```
-
----
-
-### ✅ Step 6: Watch the Magic Happen!
-
-* Go to GitHub repo → **Actions tab**
-* Observe:
-
-  * Test Stage: Runs tests and Docker build
-  * Build & Push: Sends image to ECR
-  * Deploy: Updates ECS service
-
-Look for:
+.github/workflows/deploy.yml
 
 ```
-🚀 Your app is live at: http://[IP]:3001
+name: Deploy Project 2 to AWS ECS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - aws/project-2-cicd-pipeline/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - aws/project-2-cicd-pipeline/**
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
+
+jobs:
+  test:
+    name: Test Application
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aws/project-2-cicd-pipeline
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: aws/project-2-cicd-pipeline/package-lock.json
+
 ```
 
----
+### **2. Workflow Triggers**
 
-### ✅ Step 7: Test Your Live Application
+`push` to `main` branch
 
-* App: http\://\[IP]:3001
-* Health: http\://\[IP]:3001/health
-* API: http\://\[IP]:3001/api/info
+`pull_request` to `main`
 
----
+`workflow_dispatch` (manual trigger
 
-### ✅ Step 8: Making Changes
+## **3. Environment Variables**
 
-```bash
-git add app.js
-git commit -m "Updated welcome message"
-git push
-```
+Configured via GitHub Secrets:
 
-* GitHub Actions redeploys automatically
-* Update live in \~3-5 mins
+- `AWS_REGION`
+- `ECR_REPOSITORY`
+- `ECS_SERVICE`
+- `ECS_CLUSTER`
+- `ECS_TASK_DEFINITION`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
----
+## **4. Workflow Jobs**
 
-## 📊 How It Works
+**1 Test Application**
 
-### Pipeline Flow
+**2 Deploy to AWS ECS**
 
-1. Code Push → GitHub Actions Trigger
-2. Test Stage → Run tests and Docker build
-3. Build & Push → Image pushed to ECR
-4. Deploy → ECS service updated
-5. App goes live!
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/4845ca69-62c9-45fb-a8a6-b01a87de59fd" />
 
-### AWS Components
+## **5. Fetching Public IP of ECS Task**
 
-* **ECR**: Docker image registry
-* **ECS Fargate**: Serverless container hosting
-* **CloudWatch**: Logs and metrics
-* **IAM**: Secure permission control
-* **VPC/Security Groups**: Network access
+**List ECS tasks**
 
----
+aws ecs list-tasks --cluster youngyzapp-cicd-cluster --service-name youngyzapp-cicd-service --query "taskArns[0]" --output text
 
-## 🔧 Troubleshooting
+**Describe ECS task to get ENI**
 
-### Local Issues
+aws ecs describe-tasks --cluster youngyzapp-cicd-cluster --tasks <TASK_ARN> --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' --output text
 
-* **npm install fails**:
+**Get public IP from ENI**
 
-```bash
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install
-```
+aws ec2 describe-network-interfaces --network-interface-ids <ENI_ID> --query 'NetworkInterfaces[0].Association.PublicIp' --output text
 
-* **Port 3001 in use**:
+**Example Output:**
 
-```bash
-lsof -ti :3001 | xargs kill -9
-PORT=3002 npm start
-```
+TASK_ARN: arn:aws:ecs:us-east-1:123456789012:task/youngyzapp-cicd-cluster/abcdef123456
+ENI_ID: eni-049c3a959def701b1
+PUBLIC_IP: 3.123.45.67
 
-### AWS Issues
+**Access the webapp On Port 3001**
+ http://44.200.27.230:3001/
 
-* **AWS CLI not configured**:
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/1dffcf1f-2f09-44e9-a73a-3e1874e4bca2" />
 
-```bash
-aws configure
-aws sts get-caller-identity
-```
+## 6. Cleanup (Destroying Resources)
 
-* **Permission denied**:
+Manual Cleanup Commands
 
-  * Use `AdministratorAccess` policy (for testing only)
+**Scale ECS service to 0**
 
-* **Script fails**:
-
-```bash
-aws --version
-bash -x aws-setup.sh
-```
-
-### GitHub Actions Issues
-
-* **Workflow not running**:
-
-  * Confirm file exists: `.github/workflows/deploy-aws.yml`
-  * Secrets are case-sensitive
-
-* **Authentication failed**:
-
-  * Recheck secrets and names
-
-* **ECR push failed**:
-
-  * Ensure repo exists in ECR
-
-### Deployment Issues
-
-* **ECS not updating**:
-
-  * Check ECS service events and logs
-
-* **Can't access app**:
-
-  * Wait a few mins
-  * Check security group port 3001
-
-* **Container restarting**:
-
-  * Use `CloudWatch` logs to debug
-  * Common issue: App not listening on correct port
-
----
-
-## 📈 Advanced Features
-
-### Environment Variables
-
-```javascript
-const dbUrl = process.env.DATABASE_URL || 'localhost';
-const apiKey = process.env.API_KEY || 'dev-key';
-```
-
-### Multiple Environments
-
-```bash
-CLUSTER_NAME="youngyzapp-staging-cluster"
-./aws-setup.sh
-```
-
-### Monitoring & Alerts
-
-* Use CloudWatch Logs
-* Add alarms for CPU/memory thresholds
-
----
-
-## 🧹 Clean Up Resources
-
-```bash
 aws ecs update-service --cluster youngyzapp-cicd-cluster --service youngyzapp-cicd-service --desired-count 0
+
+**Delete ECS service**
+
 aws ecs delete-service --cluster youngyzapp-cicd-cluster --service youngyzapp-cicd-service --force
+
+**Delete ECS cluster**
+
 aws ecs delete-cluster --cluster youngyzapp-cicd-cluster
+
+**Delete ECR repository**
+
 aws ecr delete-repository --repository-name my-youngyzapp --force
+
+**Delete CloudWatch logs**
+
 aws logs delete-log-group --log-group-name /ecs/youngyzapp-cicd-task
-```
 
-(Optional: delete IAM user and keys if created)
+**Delete IAM role (optional)**
 
----
+aws iam delete-role --role-name ecsTaskExecutionRole-youngyzapp-cicd-cluster
 
-## 🌟 What You Learned
+### **Automated Cleanup Script**
 
-* ✅ Node.js app deployment best practices
-* ✅ Docker containerization
-* ✅ GitHub Actions CI/CD pipelines
-* ✅ AWS ECS Fargate + ECR usage
-* ✅ IAM security roles
-* ✅ Infrastructure automation
-* ✅ CloudWatch monitoring
+- Created `Cleanup-AWS.ps1` to remove ECS services, clusters, ECR repositories, ENIs, CloudWatch log groups, and IAM roles.
+- Verified cleanup using `Check-AwsCleanup.ps1`.
 
----
+**Note:** Some resources may appear in script output due to AWS eventual consistency but are actually deleted when checked in the AWS Console.
 
-## 🚀 Next Steps
+## **7. Observations / Notes**
 
-* Add tests
-* Try blue-green deployments
-* Connect a database
-* Create staging/prod separation
-* Move to **Project 3: Kubernetes Orchestration**
+- CloudWatch logs are **not automatically created** unless task definitions explicitly enable logging.
+- IAM roles must have all policies detached before deletion.
+- ECS and ECR deletions propagate eventually; PowerShell scripts may report resources briefly after deletion.
+- Public IP is fetched using the ENI associated with ECS tasks.
 
-🎉 **Congratulations! You built a full AWS DevOps pipeline!**
+## **8. Lessons Learned**
+
+- GitHub Actions workflows can fully automate ECS deployment.
+- AWS ECS requires explicit CloudWatch logging configuration.
+- Cleaning up AWS resources requires handling dependencies (IAM roles, ENIs, log groups).
+- Eventual consistency in AWS may cause temporary discrepancies in resource checks.
+
+This documentation gives me a **complete reference** of what i did, including deployment, testing, fetching the app IP, and cleanup.
