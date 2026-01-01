@@ -1,317 +1,144 @@
-# Project 4: Monitoring and Observability
+**This project sets up professional-grade monitoring for your applications using Prometheus, Grafana, and AlertManager, with system and container metrics collected via Node Exporter and cAdvisor, plus Slack notifications for alerts.**
 
-Set up comprehensive monitoring for your applications using Prometheus and Grafana.
+## 1. Architecture Overview
 
----
+Your App → Prometheus → Grafana → Dashboards & Alerts
+↓           ↓
+System & Container Metrics → Alerts → Slack Notifications
 
-## What This Creates
+Components:
 
-* **Prometheus**: Collects metrics from applications and infrastructure
-* **Grafana**: Creates beautiful dashboards and alerts
-* **Node Exporter**: System metrics (CPU, memory, disk)
-* **cAdvisor**: Container metrics
-* **AlertManager**: Handles and routes alerts
-* **Custom dashboards**: For your web applications
+| Component | Purpose | Default Port |
+| --- | --- | --- |
+| Prometheus | Metrics collection | 9090 |
+| Grafana | Dashboards & visualizations | 3000 |
+| Node Exporter | System metrics (CPU, memory, disk) | 9100 |
+| cAdvisor | Container metrics | 8080 |
+| AlertManager | Alert routing and notifications | 9093 |
 
----
+## 2. Prerequisites
 
-## Architecture
+- Docker Desktop
+- Node.js application (optional, from previous projects)
+- Web browser
 
-```
-Your App → Prometheus → Grafana → Beautiful Dashboards
-↓           ↓           ↓
-System Metrics → Alerts → Notifications
-```
+## 3. Start Monitoring Stack
 
----
+1. docker-compose up -d: this will start all monitoring services such as Prometheus, Grafana, Node Exporter, cAdvisor AlertManager.
+2. docker-compose ps:   This will check all services if they have started and running.
 
-## Prerequisites
+## 4. Access Services
 
-* [Docker Desktop](https://www.docker.com/products/docker-desktop)
-* Your web application from previous projects (optional)
-* Web browser
+- **Prometheus**: [http://localhost:9090](http://localhost:9090/)
+- **Grafana**: [http://localhost:3000](http://localhost:3000/) (Login: `admin` / `admin`)
+- **Node Exporter**: http://localhost:9100/metrics
+- **cAdvisor**: [http://localhost:8080](http://localhost:8080/)
+- **AlertManager**: http://localhost:9093
+1. 
 
----
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/1d629022-72fb-4796-baac-f8ad70ea9c70" />
 
-## Step-by-Step Setup
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/7faf8df0-3943-40c2-9ce7-c912c419d625" />
 
-### 1. Start the Monitoring Stack
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/a3933384-fe46-437c-9588-9d9aa185e199" />
 
-```bash
-# Start all monitoring services
-docker-compose up -d
+## 5. Configure Grafana
 
-# Check all services are running
-docker-compose ps
-```
+1. Go to **Settings → Data Sources → Add Data Source**
+2. Choose **Prometheus**
+3. URL: `http://prometheus:9090`
+4. Click **Save & Test**
 
-You should see services on the following ports:
+## 6. Create Dashboards
 
-* Prometheus: `9090`
-* Grafana: `3000`
-* Node Exporter: `9100`
-* cAdvisor: `8080`
-* Alertmanager: `9093`
+**Option 1: Import pre-built**
 
----
+1. Click `+ → Import`
+2. Enter Dashboard ID: `1860` (Node Exporter Full)
+3. Select **Prometheus** as data source
+4. Click **Import**
 
-### 2. Access the Tools
+**Option 2: Custom Panel**
 
-* **Prometheus (Metrics Database)**: [http://localhost:9090](http://localhost:9090)
+1. Click `+ → Dashboard → Add Panel`
+2. Query: `up`
+3. Click **Apply** → **Save**
 
-  * Check targets: `Status` → `Targets`
-  * Try query: `up`
+## 6. Monitor Your Application
 
-* **Grafana (Dashboards)**: [http://localhost:3000](http://localhost:3000)
+Start your app:
 
-  * Login: `admin` / `admin`
-  * Explore interface
+On your application Folder Bash: npm start
 
-* **Node Exporter**: [http://localhost:9100/metrics](http://localhost:9100/metrics)
+Check Prometheus Targets: http://localhost:9090/targets
 
-* **cAdvisor**: [http://localhost:8080](http://localhost:8080)
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/6a8abe03-6557-4c73-93d0-bcb9f3a8570c" />
 
----
+## 7. Alert Rules
 
-### 3. Configure Grafana Data Source
+Create a file and name is `alert_rules.yml`
 
-1. In Grafana, go to **Settings (Gear icon) → Data Sources**
-2. Click **Add data source**
-3. Select **Prometheus**
-4. Set URL to `http://prometheus:9090`
-5. Click **Save & Test**
-
----
-
-### 4. Create Your First Dashboard
-
-**Option 1: Import Pre-built Dashboard**
-
-```text
-- Click "+" → "Import"
-- Enter Dashboard ID: 1860 (Node Exporter Full)
-- Select Prometheus as data source
-- Click "Import"
-```
-
-**Option 2: Create Custom Dashboard**
-
-1. Click `+` → `Dashboard`
-2. Add a panel and select the Prometheus data source
-3. Enter query: `up`
-4. Click `Apply` and `Save`
-
----
-
-### 5. Monitor Your Web Application
-
-```bash
-# From Project 2:
-cd ../project-2-cicd-pipeline
-npm start
-```
-
-* Visit Prometheus Targets: [http://localhost:9090/targets](http://localhost:9090/targets)
-* Create a dashboard using `youngyzapp-dashboard.json` or build custom panels
-
----
-
-### 6. Set Up Alerts (Optional)
-
-Create `alert_rules.yml`:
-
-```yaml
 groups:
-  - name: youngyzapp_alerts
-    rules:
-      - alert: youngyzappDown
-        expr: up{job="my-youngyzapp-local"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Web application is down"
-          description: "The web application has been down for more than 1 minute."
 
-      - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage detected"
-          description: "CPU usage is above 80% for more than 2 minutes."
-```
+- name: youngyzapp_alerts
+rules:
+    - alert: AppIsDown
+    expr: up{job="my-youngyzapp-local"} == 0
+    for: 30s
+    labels:
+    severity: critical
+    annotations:
+    summary: "Your Node app is DOWN"
+    description: "Prometheus cannot reach my-youngyzapp-local on port 3001."
+    - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+    for: 2m
+    labels:
+    severity: warning
+    annotations:
+    summary: "High CPU usage"
+    description: "Node exporter reports CPU usage > 80%."
+1. This rules tell Prometheus when something is wrong and when to fire an alert.
+2. Invoke-WebRequest -Uri http://localhost:9090/-/reload -Method POST
 
----
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e66097af-64dd-4d6e-84ba-d0e7acc4d8d0" />
 
-### 7. Explore Useful Metrics
-
-**System Metrics**
-
-* `node_cpu_seconds_total` – CPU usage
-* `node_memory_MemAvailable_bytes` – Available memory
-* `node_filesystem_free_bytes` – Disk space
-
-**Container Metrics**
-
-* `container_cpu_usage_seconds_total`
-* `container_memory_usage_bytes`
-* `container_network_receive_bytes_total`
-
-**App Metrics (if instrumented)**
-
-* `http_requests_total` – Total requests
-* `http_request_duration_seconds` – Latency
-* `process_cpu_seconds_total` – App CPU
-
----
-
-## AWS Integration (Optional)
-
-### Monitor ECS Services
+Restart AlertManager after update:
 
 ```bash
-kubectl apply -f aws-cloudwatch-integration.yml
+docker-compose restart alertmanager
+
+Test Slack integration:
 ```
 
-* Update Prometheus config
-* Import ECS-related dashboards: CPU, memory, task count, ALB metrics
+```powershell
+Invoke-RestMethod -Uri "https://hooks.slack.com/services/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" `
+-Method Post -Body '{"text":"Test alert from Alertmanager"}' -ContentType "application/json"
 
-### Monitor Kubernetes
+```
+
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/4f22eb9a-dd73-4b78-9883-7d728a4d26b2" />
+
+## 8. Clean Up
 
 ```bash
-kubectl apply -f https://github.com/kubernetes/kube-state-metrics/examples/standard
-```
-
-* Import dashboards:
-
-  * ID 315: Kubernetes cluster
-  * ID 8588: Deployment metrics
-
----
-
-## Common PromQL Queries
-
-**CPU Usage**
-
-```promql
-100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)
-```
-
-**Memory Usage**
-
-```promql
-(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
-```
-
-**App Uptime**
-
-```promql
-up{job="my-youngyzapp-local"}
-```
-
----
-
-## Troubleshooting
-
-### Services Not Starting
-
-```bash
-docker-compose logs prometheus
-docker-compose restart
-docker-compose ps
-```
-
-### No Data in Grafana
-
-* Verify Prometheus targets are `UP`
-* Test queries directly in Prometheus
-* Test Grafana data source connection
-
-### Missing App Metrics
-
-```bash
-curl http://localhost:3001/metrics
-```
-
-* Install `prom-client` in Node.js: `npm install prom-client`
-
-### AlertManager Issues
-
-```bash
-docker-compose logs alertmanager
-```
-
-* Verify alert rules in Prometheus dashboard
-
----
-
-## Best Practices
-
-* Clear dashboard titles & consistent colors
-* Alert only on meaningful thresholds
-* Use "Golden Signals": latency, traffic, errors, saturation
-
----
-
-## Production Considerations
-
-**Security**
-
-* Change default passwords
-* Use HTTPS
-* Restrict network access
-
-**Scalability**
-
-* Use external Prometheus storage or Thanos
-* Use federated Prometheus for large-scale setups
-
-**Reliability**
-
-* Monitor Prometheus & Grafana uptime
-* Back up dashboards/configs
-* Use redundancy & alerting for failures
-
----
-
-## 🧹 Clean Up
-
-```bash
+# Stop and remove containers
 docker-compose down
+
+# Remove volumes
 docker-compose down -v
-docker image prune
+
+# Remove unused images
+docker image prune 
+docker ps -a
 ```
 
----
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/8d351d67-6f36-46df-926b-ba4e18e7efb1" />
 
-## ✅ What You Learned
+## 9. Troubleshooting
 
-* Monitoring setup with Prometheus + Grafana
-* System, container, and app-level metrics
-* Dashboard creation & customization
-* Alerts via AlertManager
-* AWS/Kubernetes integration
+- No data in Grafana → Check Prometheus targets (`Status → Targets`)
+- Missing app metrics → Run `curl http://localhost:3001/metrics`
+- Alerts not firing → Check Prometheus alert rules and AlertManager logs:
 
----
-
-## 📈 Real-World Applications
-
-* SRE monitoring of SLIs/SLOs
-* Incident troubleshooting
-* Performance bottleneck detection
-* Capacity planning
-* DevOps observability workflows
-
----
-
-## ⏭️ Next Steps
-
-* Add custom metrics to your apps
-* Set up logging with ELK
-* Add tracing with Jaeger
-* Explore SLI/SLOs
-* Move on to **Project 5: Multi-Environment Setup**
-
-🎉 Congratulations! You now have professional-grade monitoring!
+**This documentation covers all steps, commands, and configs used in Project 4.**
