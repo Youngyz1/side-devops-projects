@@ -8,284 +8,103 @@ cp ../project-2-cicd-pipeline/Dockerfile .
 ```
 
 # Project 3: Kubernetes Container Orchestration
+## **Project Overview**
 
-Learn to run your web application on Kubernetes for scalability and reliability.
+### This project deploys a Node.js web application (`my-youngyzapp`) to an AWS EKS Kubernetes cluster, using Docker images stored in ECR, managed with `eksctl`. Horizontal Pod Autoscaler (HPA) is configured, and the application is exposed via a LoadBalancer service.
 
-## What This Does
+## **1. Prerequisites**
 
-* Runs your app in multiple containers (pods)
-* Automatically restarts failed containers
-* Load balances traffic between containers
-* Scales up/down based on demand
-* Provides service discovery and networking
+- AWS CLI configured with proper credentials.
+- `eksctl` installed (v0.217.0 on Windows).
+- `kubectl` installed.
+- Docker installed and running locally.
+- Node.js app ready with Dockerfile.
 
-## Two Options: Local or AWS EKS
+Bash::     minikube start
+              minikube addons enable metrics-server
+              eval $(minikube docker-env)
 
-### Option A: Local Kubernetes (Recommended for learning)
+## **2. Docker Image Build & Push**
 
-* Uses Docker Desktop or Minikube
-* Free and fast to set up
-* Perfect for learning Kubernetes concepts
+1. **Build Docker Image**
 
-### Option B: AWS EKS (Optional, for production experience)
+                           docker build -t my-youngyzapp:latest .
 
-* Managed Kubernetes service on AWS
-* Production-ready setup
-* Costs money but more realistic
+1. **Tag for ECR:**      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account_id>.dkr.ecr.us-east-1.amazonaws.com
+                          docker tag my-youngyzapp:latest <account_id>.dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
 
-## Prerequisites
+1. **Push to ECR:**    docker push <account_id>.dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
+****
 
-### For Local Kubernetes:
+**Result:** Image available in AWS ECR.
 
-* [Docker Desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
-* OR [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/)
+## 3. Deploying To Kubernetes
 
-### For AWS EKS (Optional):
-
-* [AWS CLI](https://aws.amazon.com/cli/) configured
-* [eksctl](https://eksctl.io/introduction/#installation)
-* AWS account (will incur costs)
-
-## Option A: Local Kubernetes Setup
-
-### 1. Enable Kubernetes in Docker Desktop
-
-1. Open Docker Desktop
-2. Go to Settings → Kubernetes
-3. Check "Enable Kubernetes"
-4. Click "Apply & Restart"
-5. Wait for green "Kubernetes is running" status
-
-**OR setup Minikube:**
-
-```bash
-minikube start
-minikube addons enable metrics-server
-
-# Set up Docker environment
-eval $(minikube docker-env)
-```
-
-### 2. Build Your Docker Image
-
-```bash
-docker build -t my-youngyzapp:latest .
-docker images | grep my-youngyzapp
-```
-
-### 3. Deploy to Kubernetes
-
-```bash
 kubectl apply -f k8s/app.yaml
 kubectl get pods
 kubectl get services
 kubectl get pods -w
-```
 
 ### 4. Access Your Application
 
-#### For Docker Desktop:
+- Docker Desktop: Use EXTERNAL-IP from `kubectl get services`
+- Minikube:      minikube service my-youngyzapp-service --url
 
-```bash
-kubectl get services my-youngyzapp-service
-# Use the EXTERNAL-IP shown
-```
-
-#### For Minikube:
-
-```bash
-minikube service my-youngyzapp-service --url
-```
-
-### 5. Test Kubernetes Features
+## 5. Test Kubernetes Features
 
 **Scaling:**
 
-```bash
+bash      
+
 kubectl scale deployment my-youngyzapp --replicas=5
 kubectl get pods -w
 kubectl scale deployment my-youngyzapp --replicas=2
-```
 
-**Self-healing:**
+1. **Create Cluster:**   eksctl create cluster --name my-youngyzapp-cluster --region us-east-1 --nodes 2 --node-type t3.medium
 
-```bash
-kubectl delete pod [POD-NAME]
-kubectl get pods -w
-```
+<img width="1080" height="607" alt="image" src="https://github.com/user-attachments/assets/5fd72af1-4d6f-4f6b-abce-67b5dfbd0d3b" />
 
-**Rolling updates:**
+1. **Verify Node Group:**  eksctl get nodegroup --cluster my-youngyzapp-cluster --region us-east-1
 
-```bash
-kubectl set image deployment/my-youngyzapp youngyzapp=my-youngyzapp:v2
-kubectl rollout status deployment/my-youngyzapp
-```
+4. Node IAM Role & ECR Access
 
-## Option B: AWS EKS Setup (Optional)
+- **Problem:** Nodes could not pull images from ECR (`ImagePullBackOff` / `ErrImagePull`).
+- **Solution:** Attach AmazonEC2ContainerRegistryReadOnly policy to node IAM role.
 
-### 1. Set Up EKS Cluster
+Bash:      aws iam attach-role-policy \
+--role-name <node-instance-role> \
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
-```bash
-chmod +x eks-setup.sh
-./eks-setup.sh
-```
+- **Verify IAM Role from CloudFormation**
 
-### 2. Push Image to ECR
+Bash:   aws cloudformation describe-stack-resources \
+--stack-name eksctl-my-youngyzapp-cluster-nodegroup-<nodegroup> \
+--query "StackResources[?ResourceType=='AWS::IAM::Role'].PhysicalResourceId" \
+--output text
 
-```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com
-docker tag my-youngyzapp:latest [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
-docker push [ACCOUNT-ID].dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest
-```
+## **5. Kubernetes Deployment**
 
-### 3. Update EKS Configuration
+1. **Apply Deployment & Services:**   kubectl apply -f k8s/app.yaml
+2. **Verify Deployment:**         kubectl rollout status deployment my-youngyzapp
+kubectl get pods -o wide
+kubectl get service my-youngyzapp-service
 
-```bash
-# Edit k8s/app.yaml to use the ECR image
-kubectl apply -f k8s/app.yaml
-```
+    **Result:** Deployment successful, pods running, LoadBalancer created.
+curl http://<load-balancer-dns>
 
-## Useful Kubernetes Commands
+<img width="1080" height="607" alt="image" src="https://github.com/user-attachments/assets/c8a98923-aa19-436a-94cd-45a165aaf764" />
 
-```bash
-kubectl get all
-kubectl describe pod [POD-NAME]
-kubectl logs [POD-NAME]
-kubectl logs -f [POD-NAME]
-kubectl exec -it [POD-NAME] -- /bin/sh
-kubectl get events --sort-by=.metadata.creationTimestamp
-kubectl port-forward service/my-youngyzapp-service 8080:80
-kubectl delete -f k8s/app.yaml
-```
+## **6. Horizontal Pod Autoscaler (HPA)**
 
-## Understanding the Configuration
+1. **Verify HPA**
 
-### Deployment
+    bash:   kubectl get hpa
 
-* `replicas: 3`: Runs 3 copies of your app
-* `resources`: CPU and memory limits
-* `livenessProbe`: Restarts unhealthy containers
-* `readinessProbe`: Sends traffic only to ready containers
+NAME                REFERENCE                  TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+my-youngyzapp-hpa   Deployment/my-youngyzapp   cpu: 1%/70%   2         10        2          105m
 
-### Service
+<img width="1080" height="607" alt="image" src="https://github.com/user-attachments/assets/346db8be-cac3-48a8-b0f8-3c0bf7368929" />
 
-* `type: LoadBalancer`: Exposes a public IP
-* `port: 80`: External port
-* `targetPort: 3001`: Internal app port
+## 7. Troubleshooting
 
-### ConfigMap
-
-* Stores config data
-* Mount as files or env vars
-* Apply changes without image rebuild
-
-### HPA (Horizontal Pod Autoscaler)
-
-* `minReplicas: 2`, `maxReplicas: 10`
-* `averageUtilization: 70`
-
-## Troubleshooting
-
-### Local Kubernetes
-
-#### "No resources found"
-
-```bash
-kubectl cluster-info
-kubectl config current-context
-minikube status
-```
-
-#### "ImagePullBackOff"
-
-```bash
-eval $(minikube docker-env)
-docker build -t my-youngyzapp:latest .
-docker images | grep my-youngyzapp
-```
-
-#### "Pods stuck in Pending"
-
-```bash
-kubectl describe nodes
-kubectl get events --sort-by=.metadata.creationTimestamp
-```
-
-### Application Issues
-
-#### "Can't access the app"
-
-```bash
-kubectl get services
-minikube service my-youngyzapp-service --url
-kubectl get pods
-kubectl logs [POD-NAME]
-```
-
-#### "Health checks failing"
-
-```bash
-kubectl logs [POD-NAME]
-kubectl exec [POD-NAME] -- curl localhost:3001/health
-kubectl port-forward [POD-NAME] 3001:3001
-curl localhost:3001/health
-```
-
-### EKS Issues
-
-#### "eksctl command not found"
-
-```bash
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-```
-
-#### "Cluster creation failed"
-
-* Check AWS credentials: `aws sts get-caller-identity`
-* Verify IAM permissions
-* Check AWS service limits
-
-## Clean Up
-
-### Local Kubernetes:
-
-```bash
-kubectl delete -f k8s/app.yaml
-minikube stop
-minikube delete
-```
-
-### AWS EKS:
-
-```bash
-kubectl delete -f k8s/app.yaml
-eksctl delete cluster --name my-youngyzapp-cluster --region us-east-1
-```
-
-## What You Learned
-
-✅ Kubernetes container orchestration
-✅ Replica management and self-healing
-✅ Load balancing and service discovery
-✅ Config management via ConfigMaps
-✅ Health checks and rolling updates
-✅ Horizontal pod autoscaling
-✅ (Optional) Production deployment with EKS
-
-## Real-World Use Cases
-
-* Microservices architecture
-* High availability and zero-downtime deploys
-* Traffic-based scaling
-* Resilient production systems
-
-## Next Steps
-
-* Learn about Kubernetes namespaces
-* Explore Helm for deployment automation
-* Study Ingress controllers for routing
-* Move on to Project 4: Monitoring and Observability
-
-🎉 **Congratulations! You're now running scalable apps on Kubernetes!**
+## **8. Cleanup**
