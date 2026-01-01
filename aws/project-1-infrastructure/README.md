@@ -1,189 +1,107 @@
+This document explains the full workflow used to deploy the **Project-1 Infrastructure** using **Terraform**, push changes to GitHub, and retrieve the **public IPv4** of an ECS Fargate task.
 
+## **1. Clone the Repository**
 
-````markdown
-# 🚀 Project 1: Infrastructure as Code (AWS)
+Start by cloning your infrastructure repository:
 
-Create your first AWS infrastructure using **Terraform** and **ECS Fargate**.
+1. git clone https://github.com/Osomudeya/side-devops-projects.git
+2. git init
+git add .
+git commit -m "Initial commit for project 1 infrastructure"
+git remote add origin https://github.com/Youngyz1/[side-devops-projects.git](https://github.com/Osomudeya/side-devops-projects.git)
+git push -u origin main
 
----
+## **2. Configure AWS CLI If Not Configured**
 
-## 🌐 What This Creates
+1. Ensure AWS credentials are configured:
 
-- ECS Fargate cluster (serverless containers)
-- ECS service running Nginx web server
-- CloudWatch log group for monitoring
-- Security group for network access
-- IAM roles for proper permissions
+           aws configure
 
----
+1. Provide:
+- AWS Access Key
+- AWS Secret Key
+- Region:
 
-## 🧰 Prerequisites
+## **3. Review & Update Terraform Files**
 
-- [AWS CLI](https://aws.amazon.com/cli/) installed and configured
-- [Terraform](https://www.terraform.io/downloads.html) installed
-- AWS account (Free Tier is fine)
+Inside the project-1-infrastructure folder, the following important files were used:
 
----
+1. [main.tf](http://main.tf/) – Defines ECS, IAM, Logs, Networking, and Fargate Service
+2. [variables.tf](http://variables.tf/) – Inputs
+3. [outputs.tf](http://outputs.tf/) – Helpful outputs such as cluster name and log group
+4. You then updated [main.tf](http://main.tf/) to ensure that:
 
-## 🛠 Step-by-Step Deployment
+## **4. Initialize Terraform**
 
-### ✅ Step 1: Set Up AWS CLI
+1. terraform init:   This downloads AWS provider plugins.
 
-```bash
-# macOS
-brew install awscli
+## **5. Validate & Apply the Infrastructure**
 
-# Linux
-sudo apt install awscli
+1. Check configuration: terraform validate
+2. Preview everything: terraform plan
+3. Deploy everything: terraform apply -auto-approve
+4. Terraform created: ECS Cluster, ECS Task Definition, ECS Service, CloudWatch Log Group, IAM Execution Role, Security Group.
+5. After apply, Terraform returned outputs such as: Cluster name, Service name, Log group name
 
-# Windows
-# Download from AWS website
+## **6. Retrieve ECS Task ARN**
 
-# Configure AWS credentials
-aws configure
-# Provide Access Key, Secret Key, region (e.g. us-east-1), output (e.g. json)
+1. First, list tasks in your service: 
 
-# Verify login
-aws sts get-caller-identity
-````
+aws ecs list-tasks \
+--cluster youngyz-devops-cluster \
+--service-name youngyz-devops-cluster-youngyzapp-service \
+--query "taskArns[0]" \
+--output text
 
----
+1. This returned something like: arn:aws:ecs:us-east-1:958421185668:task/youngyz-devops-cluster/40cc6f3d99104427adcbbcb3004438a0
 
-### ✅ Step 2: Customize Your Settings
+## **7. Get Network Interface from ECS Task**
 
-```bash
-# Edit terraform.tfvars
-# Change "yourname" to personalize
+1. Each Fargate task has an ENI (Elastic Network Interface). Run: 
 
-cluster_name = "john-devops-cluster"
-```
-
----
-
-### ✅ Step 3: Deploy Infrastructure
-
-```bash
-# Initialize Terraform
-terraform init
-
-# Review planned changes
-terraform plan
-
-# Apply the configuration
-terraform apply
-# Confirm with 'yes' when prompted
-```
-
----
-
-### ✅ Step 4: Get the Public IP
-
-```bash
-# Store outputs into variables
-CLUSTER_NAME=$(terraform output -raw cluster_name)
-SERVICE_NAME=$(terraform output -raw service_name)
-
-# List running tasks
-aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME
-
-# Replace [TASK_ARN] with actual output
-aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks [TASK_ARN]
-
-# OR use this one-liner:
 aws ecs describe-tasks \
-  --cluster $CLUSTER_NAME \
-  --tasks $(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query 'taskArns[0]' --output text) \
-  --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
-  --output text | \
-  xargs -I {} aws ec2 describe-network-interfaces \
-  --network-interface-ids {} \
-  --query 'NetworkInterfaces[0].Association.PublicIp' \
-  --output text
-```
+--cluster youngyz-devops-cluster \
+--tasks 40cc6f3d99104427adcbbcb3004438a0 \
+--query "tasks[0].attachments[0].details"
 
----
+1. The output contained:
 
-### ✅ Step 5: Test Your Application
+networkInterface Id
+privateIPv4Address
+subnet Id
 
-* Copy the public IP from step 4
-* Open in browser:
-  `http://[PUBLIC_IP]`
-* You should see the **Nginx Welcome Page**
+1. Example:
 
----
+"name": "networkInterfaceId",
+"value": "eni-04169cc5e48e01f92"
 
-### ✅ Step 6: View Logs in CloudWatch
+## **8. Retrieve the Public IPv4 Address**
 
-```bash
-LOG_GROUP=$(terraform output -raw log_group_name)
-aws logs describe-log-streams --log-group-name $LOG_GROUP
-```
+1. Using the ENI: Run 
 
----
+aws ec2 describe-network-interfaces \
+--network-interface-ids eni-04169cc5e48e01f92 \
+--query "NetworkInterfaces[0].Association.PublicIp" \
+--output text
 
-## 🐞 Troubleshooting
+1. You received:
 
-### ❌ Error: `NoCredentialsError`
+       **3.239.118.21**
 
-* Run `aws configure`
-* Confirm with `aws sts get-caller-identity`
+This is the **public IP** of your container.
 
----
+## **9. Test the Application in Browser**
 
-### ❌ Error: `UnauthorizedOperation`
+1. [http://3.239.118.21](http://3.239.118.21/)
 
-* Attach `AdministratorAccess` policy to your IAM user
-* Ensure ECS, EC2, IAM, and CloudWatch permissions are present
+Your containerized app should be accessible publicly.
 
----
+<img width="1080" height="607" alt="image" src="https://github.com/user-attachments/assets/1bc535fc-ee71-445b-8974-878daf8817cb" />
 
-### ❌ Task Keeps Stopping
+## **10. Destroy Resources**
 
-* Check logs in CloudWatch
-* Verify container image is valid and accessible
-* Ensure sufficient CPU/memory values
+1. Remove the entire infrastructure:
 
----
+       terraform destroy -auto-approve
 
-### ❌ Website Not Loading
-
-* Wait 2–3 minutes for app to start
-* Confirm public IP assignment
-* Ensure port 80 is open in security group
-
----
-
-### ❌ Error: `ResourceAlreadyExistsException`
-
-* Edit `terraform.tfvars` to use a unique cluster name
-* Or destroy existing infra: `terraform destroy`
-
----
-
-## 🧹 Clean Up (Important!)
-
-```bash
-terraform destroy
-# Confirm with 'yes'
-```
-
-Then verify in AWS Console that no resources remain to avoid unexpected charges.
-
----
-
-## 🎓 What You Learned
-
-✅ Infrastructure as Code with Terraform
-✅ AWS ECS Fargate (serverless containers)
-✅ IAM Roles & Permissions
-✅ Security Groups & VPC
-✅ CloudWatch Logging
-✅ AWS CLI Commands
-
----
-
-## 🔄 Next Steps
-
-* Try deploying a different Docker image
-* Modify the security group to allow other ports
-* Move on to **Project 2: Automated Deployment Pipeline**
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/26366507-ebd9-40e2-8974-070ac23a5560" />
