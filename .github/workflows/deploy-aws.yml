@@ -19,6 +19,7 @@ env:
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
   ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
+  ECS_EXECUTION_ROLE_ARN: arn:aws:iam::958421185668:role/youngyz-ecs-execution-role
 
 jobs:
   test:
@@ -94,7 +95,7 @@ jobs:
             --requires-compatibilities FARGATE \
             --cpu 256 \
             --memory 512 \
-            --execution-role-arn $(aws iam get-role --role-name ecsTaskExecutionRole-${{ env.ECS_CLUSTER }} --query 'Role.Arn' --output text) \
+            --execution-role-arn ${{ env.ECS_EXECUTION_ROLE_ARN }} \
             --container-definitions "[
               {
                 \"name\": \"youngyzapp\",
