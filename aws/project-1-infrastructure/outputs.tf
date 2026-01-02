@@ -39,3 +39,8 @@ To get the public IP via CLI:
 aws ecs list-tasks --cluster ${aws_ecs_cluster.youngyz.name} --service-name ${aws_ecs_service.youngyzapp.name}
 EOF
 }
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository"
+  value       = aws_ecr_repository.youngyzapp.repository_url
+}

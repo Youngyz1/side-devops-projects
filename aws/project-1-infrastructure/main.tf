@@ -56,8 +56,7 @@ resource "aws_cloudwatch_log_group" "youngyzapp" {
 
 # ECS Task Execution IAM Role
 resource "aws_iam_role" "ecs_execution_role" {
-  name = "${var.cluster_name}-ecs-execution-role"
-
+  name = "youngyz-ecs-execution-role"  # <-- hardcode it
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -72,7 +71,7 @@ resource "aws_iam_role" "ecs_execution_role" {
   })
 
   tags = {
-    Name        = "${var.cluster_name}-ecs-execution-role"
+    Name        = "youngyz-ecs-execution-role"
     Environment = var.environment
   }
 }
@@ -111,42 +110,44 @@ resource "aws_security_group" "youngyzapp_sg" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "youngyzapp" {
-  family                   = "${var.cluster_name}-youngyzapp"
+  # Wait until the IAM role and policy are fully created
+  depends_on = [
+    aws_iam_role_policy_attachment.ecs_execution_role_policy
+  ]
+
+  # Optional: use a predictable family name
+  family                   = "youngyzapp"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
+
+  # Use the predictable IAM role ARN
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
-  container_definitions = jsonencode([
-    {
-      name  = "youngyzapp"
-      image = var.container_image
-      portMappings = [
-        {
-          containerPort = 80
-          protocol      = "tcp"
-        }
-      ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.youngyzapp.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "ecs"
-        }
+  container_definitions = jsonencode([{
+    name  = "youngyzapp"
+    image = var.container_image
+    portMappings = [{
+      containerPort = 80
+      protocol      = "tcp"
+    }]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.youngyzapp.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
       }
-      environment = [
-        {
-          name  = "ENVIRONMENT"
-          value = var.environment
-        }
-      ]
     }
-  ])
+    environment = [{
+      name  = "ENVIRONMENT"
+      value = var.environment
+    }]
+  }])
 
   tags = {
-    Name        = "${var.cluster_name}-youngyzapp-task"
+    Name        = "youngyzapp-task"
     Environment = var.environment
   }
 }
@@ -167,6 +168,21 @@ resource "aws_ecs_service" "youngyzapp" {
 
   tags = {
     Name        = "${var.cluster_name}-youngyzapp-service"
+    Environment = var.environment
+  }
+}
+
+# ECR Repository
+resource "aws_ecr_repository" "youngyzapp" {
+  name                 = "${var.cluster_name}-repo"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${var.cluster_name}-repo"
     Environment = var.environment
   }
 }
