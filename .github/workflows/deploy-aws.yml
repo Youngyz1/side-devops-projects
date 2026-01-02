@@ -16,9 +16,9 @@ on:
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-  ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  ECS_TASK_FAMILY: youngyzapp
   ECS_EXECUTION_ROLE_ARN: arn:aws:iam::958421185668:role/youngyz-ecs-execution-role
 
 jobs:
@@ -30,26 +30,18 @@ jobs:
         working-directory: aws/project-2-cicd-pipeline
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
-          cache-dependency-path: aws/project-2-cicd-pipeline/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests
         run: npm test
-
-      - name: Test Docker build
-        run: |
-          docker build -t project2-test .
-          echo "Docker build successful!"
 
   deploy:
     name: Deploy to AWS ECS
@@ -61,8 +53,7 @@ jobs:
         working-directory: aws/project-2-cicd-pipeline
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -72,71 +63,48 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push Docker image
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: Update ECS task definition with new image
+      - name: Register ECS task definition
+        id: task-def
         run: |
-          aws ecs register-task-definition \
-            --family ${{ env.ECS_TASK_DEFINITION }} \
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --family $ECS_TASK_FAMILY \
             --network-mode awsvpc \
             --requires-compatibilities FARGATE \
             --cpu 256 \
             --memory 512 \
-            --execution-role-arn ${{ env.ECS_EXECUTION_ROLE_ARN }} \
+            --execution-role-arn $ECS_EXECUTION_ROLE_ARN \
             --container-definitions "[
               {
                 \"name\": \"youngyzapp\",
                 \"image\": \"${{ steps.build-image.outputs.image }}\",
                 \"essential\": true,
                 \"portMappings\": [
-                  {\"containerPort\": 3001,\"protocol\": \"tcp\"}
+                  {\"containerPort\": 3001, \"protocol\": \"tcp\"}
                 ]
               }
-            ]"
+            ]" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_SERVICE }} \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --task-definition $TASK_DEF_ARN \
             --force-new-deployment
-
-      - name: Output Public App URL
-        run: |
-          echo "Fetching ECS task IP..."
-          sleep 10
-
-          TASK_ARN=$(aws ecs list-tasks \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service-name ${{ env.ECS_SERVICE }} \
-            --query 'taskArns[0]' \
-            --output text)
-
-          NETWORK_INTERFACE_ID=$(aws ecs describe-tasks \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --tasks $TASK_ARN \
-            --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
-            --output text)
-
-          PUBLIC_IP=$(aws ec2 describe-network-interfaces \
-            --network-interface-ids $NETWORK_INTERFACE_ID \
-            --query 'NetworkInterfaces[0].Association.PublicIp' \
-            --output text)
-
-          echo ""
-          echo "🚀 Deployment successful!"
-          echo "📱 App URL:  http://$PUBLIC_IP:3001"
+            
