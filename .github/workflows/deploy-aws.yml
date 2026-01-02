@@ -72,19 +72,21 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          set -e
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
           echo "Building image: $IMAGE_URI"
-          docker build -t $IMAGE_URI .
-          docker push $IMAGE_URI
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
 
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
 
       - name: Register ECS task definition
         id: task-def
         run: |
+          set -e
           TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family $ECS_TASK_FAMILY \
+            --family "$ECS_TASK_FAMILY" \
             --network-mode awsvpc \
             --requires-compatibilities FARGATE \
             --cpu 256 \
@@ -108,8 +110,9 @@ jobs:
 
       - name: Deploy to ECS
         run: |
+          set -e
           aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --task-definition $TASK_DEF_ARN \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$TASK_DEF_ARN" \
             --force-new-deployment
