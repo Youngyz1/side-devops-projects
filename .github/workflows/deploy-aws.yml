@@ -60,19 +60,24 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push Docker image
         id: build-image
         env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+          echo "Building image: $IMAGE_URI"
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
+
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
 
       - name: Register ECS task definition
@@ -84,14 +89,14 @@ jobs:
             --requires-compatibilities FARGATE \
             --cpu 256 \
             --memory 512 \
-            --execution-role-arn $ECS_EXECUTION_ROLE_ARN \
+            --execution-role-arn "$ECS_EXECUTION_ROLE_ARN" \
             --container-definitions "[
               {
                 \"name\": \"youngyzapp\",
                 \"image\": \"${{ steps.build-image.outputs.image }}\",
                 \"essential\": true,
                 \"portMappings\": [
-                  {\"containerPort\": 3001, \"protocol\": \"tcp\"}
+                  { \"containerPort\": 3001, \"protocol\": \"tcp\" }
                 ]
               }
             ]" \
@@ -99,6 +104,7 @@ jobs:
             --output text)
 
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+          echo "Registered task definition: $TASK_DEF_ARN"
 
       - name: Deploy to ECS
         run: |
@@ -107,4 +113,3 @@ jobs:
             --service $ECS_SERVICE \
             --task-definition $TASK_DEF_ARN \
             --force-new-deployment
-            
