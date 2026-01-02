@@ -1,10 +1,5 @@
 # Development environment outputs
 
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-}
-
 output "environment" {
   description = "Environment name"
   value       = "dev"
