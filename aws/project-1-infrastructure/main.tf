@@ -1,4 +1,4 @@
-# main.tf - Creates ECS infrastructure on AWS
+# main.tf - Creates ECS infrastructure on AWS (CI/CD compatible)
 
 terraform {
   required_version = ">= 1.0"
@@ -14,12 +14,13 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Get the default VPC
+# -----------------------------
+# Networking (Default VPC)
+# -----------------------------
 data "aws_vpc" "youngyz" {
   default = true
 }
 
-# Get public subnets in the default VPC
 data "aws_subnets" "public_subnets" {
   filter {
     name   = "vpc-id"
@@ -32,7 +33,9 @@ data "aws_subnets" "public_subnets" {
   }
 }
 
-# Create ECS Cluster
+# -----------------------------
+# ECS Cluster
+# -----------------------------
 resource "aws_ecs_cluster" "youngyz" {
   name = var.cluster_name
 
@@ -43,7 +46,9 @@ resource "aws_ecs_cluster" "youngyz" {
   }
 }
 
-# CloudWatch Log Group
+# -----------------------------
+# CloudWatch Logs
+# -----------------------------
 resource "aws_cloudwatch_log_group" "youngyzapp" {
   name              = "/ecs/${var.cluster_name}-youngyzapp"
   retention_in_days = 7
@@ -54,20 +59,19 @@ resource "aws_cloudwatch_log_group" "youngyzapp" {
   }
 }
 
-# ECS Task Execution IAM Role
+# -----------------------------
+# IAM Role (ECS Execution Role)
+# -----------------------------
 resource "aws_iam_role" "ecs_execution_role" {
-  name = "youngyz-ecs-execution-role"  # <-- hardcode it
+  name = "youngyz-ecs-execution-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+    }]
   })
 
   tags = {
@@ -76,21 +80,22 @@ resource "aws_iam_role" "ecs_execution_role" {
   }
 }
 
-# Attach AmazonECSTaskExecutionRolePolicy
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   role       = aws_iam_role.ecs_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Security Group for the web app
+# -----------------------------
+# Security Group (PORT 3001)
+# -----------------------------
 resource "aws_security_group" "youngyzapp_sg" {
   name        = "${var.cluster_name}-youngyzapp-sg"
-  description = "Security group for web application"
+  description = "Security group for youngyz app"
   vpc_id      = data.aws_vpc.youngyz.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 3001
+    to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -108,38 +113,40 @@ resource "aws_security_group" "youngyzapp_sg" {
   }
 }
 
+# -----------------------------
 # ECS Task Definition
+# -----------------------------
 resource "aws_ecs_task_definition" "youngyzapp" {
-  # Wait until the IAM role and policy are fully created
   depends_on = [
     aws_iam_role_policy_attachment.ecs_execution_role_policy
   ]
 
-  # Optional: use a predictable family name
   family                   = "youngyzapp"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-
-  # Use the predictable IAM role ARN
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([{
     name  = "youngyzapp"
-    image = var.container_image
+    image = "nginx:latest" # placeholder (CI/CD replaces image)
+    essential = true
+
     portMappings = [{
-      containerPort = 80
+      containerPort = 3001
       protocol      = "tcp"
     }]
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.youngyzapp.name
-        "awslogs-region"        = var.aws_region
-        "awslogs-stream-prefix" = "ecs"
+        awslogs-group         = aws_cloudwatch_log_group.youngyzapp.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "ecs"
       }
     }
+
     environment = [{
       name  = "ENVIRONMENT"
       value = var.environment
@@ -152,7 +159,9 @@ resource "aws_ecs_task_definition" "youngyzapp" {
   }
 }
 
+# -----------------------------
 # ECS Service
+# -----------------------------
 resource "aws_ecs_service" "youngyzapp" {
   name            = "${var.cluster_name}-youngyzapp-service"
   cluster         = aws_ecs_cluster.youngyz.id
@@ -172,9 +181,11 @@ resource "aws_ecs_service" "youngyzapp" {
   }
 }
 
-# ECR Repository
+# -----------------------------
+# ECR Repository (CI/CD MATCH)
+# -----------------------------
 resource "aws_ecr_repository" "youngyzapp" {
-  name                 = "${var.cluster_name}-repo"
+  name                 = "my-youngyzapp"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -182,7 +193,7 @@ resource "aws_ecr_repository" "youngyzapp" {
   }
 
   tags = {
-    Name        = "${var.cluster_name}-repo"
+    Name        = "my-youngyzapp"
     Environment = var.environment
   }
 }
