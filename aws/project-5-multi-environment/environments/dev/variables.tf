@@ -14,12 +14,13 @@ variable "aws_region" {
 variable "container_image" {
   description = "Docker image to run"
   type        = string
+  default     = "958421185668.dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:latest"
 }
 
 variable "container_port" {
   description = "Port the container listens on"
   type        = number
-  default     = 80
+  default     = 3001
 }
 
 variable "environment" {

@@ -1,0 +1,109 @@
+
+{
+    "taskDefinition": {
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:958421185668:task-definition/dev-youngyzapp:5",
+        "containerDefinitions": [
+            {
+                "name": "youngyzapp",
+                "image": "958421185668.dkr.ecr.us-east-1.amazonaws.com/my-youngyzapp:d1a6e489c2fee189aaaae96b1372c78012f937d4",
+                "cpu": 0,
+                "portMappings": [
+                    {
+                        "containerPort": 80,
+                        "hostPort": 80,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [
+                    {
+                        "name": "APP_NAME",
+                        "value": "youngyzapp"
+                    },
+                    {
+                        "name": "DEBUG",
+                        "value": "true"
+                    },
+                    {
+                        "name": "LOG_LEVEL",
+                        "value": "debug"
+                    },
+                    {
+                        "name": "ENVIRONMENT",
+                        "value": "dev"
+                    }
+                ],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/dev-youngyzapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                },
+                "healthCheck": {
+                    "command": [
+                        "CMD-SHELL",
+                        "curl -f http://localhost:80/health || exit 1"
+                    ],
+                    "interval": 30,
+                    "timeout": 5,
+                    "retries": 3,
+                    "startPeriod": 60
+                },
+                "systemControls": []
+            }
+        ],
+        "family": "dev-youngyzapp",
+        "executionRoleArn": "arn:aws:iam::958421185668:role/dev-youngyzapp-execution-role",
+        "networkMode": "awsvpc",
+        "revision": 5,
+        "volumes": [],
+        "status": "ACTIVE",
+        "requiresAttributes": [
+            {
+                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+            },
+            {
+                "name": "ecs.capability.execution-role-awslogs"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.ecr-auth"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+            },
+            {
+                "name": "ecs.capability.container-health-check"
+            },
+            {
+                "name": "ecs.capability.execution-role-ecr-pull"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+            },
+            {
+                "name": "ecs.capability.task-eni"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+            }
+        ],
+        "placementConstraints": [],
+        "compatibilities": [
+            "EC2",
+            "MANAGED_INSTANCES",
+            "FARGATE"
+        ],
+        "requiresCompatibilities": [
+            "FARGATE"
+        ],
+        "cpu": "256",
+        "memory": "512",
+        "registeredAt": "2026-01-03T21:41:22.187000+01:00",
+        "registeredBy": "arn:aws:iam::958421185668:user/Terraform"
+    },
+    "tags": []
+}

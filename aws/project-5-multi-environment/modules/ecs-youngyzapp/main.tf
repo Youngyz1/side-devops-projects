@@ -101,11 +101,11 @@ resource "aws_security_group" "app" {
 # ECS Task Definition
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.environment}-${var.app_name}"
-  network_mode            = "awsvpc"
+  network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                     = var.cpu
-  memory                  = var.memory
-  execution_role_arn      = aws_iam_role.ecs_execution_role.arn
+  cpu                      = var.cpu
+  memory                   = var.memory
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([
     {
@@ -146,7 +146,7 @@ resource "aws_ecs_task_definition" "app" {
         interval    = 30
         timeout     = 5
         retries     = 3
-        startPeriod = 60
+        startPeriod = 120
       }
     }
   ])
@@ -175,6 +175,9 @@ resource "aws_ecs_service" "app" {
     enable   = true
     rollback = true
   }
+
+  # Health check grace period added to avoid premature rollback
+  health_check_grace_period_seconds = 120
 
   tags = {
     Name        = "${var.environment}-${var.app_name}-service"
